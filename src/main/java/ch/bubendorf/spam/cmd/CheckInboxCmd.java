@@ -56,17 +56,17 @@ public class CheckInboxCmd extends BaseFolderCommand {
     }
 
     private void processAsSpam(final Message msg, final ExecResult result) throws MessagingException {
-        logger.info("SPAM");
+        logger.info("SPAM [" + result.getScore() + "]");
         genericProcess(cmdArgs.getSpamActions(), msg, getSpamFolder(), result);
     }
 
     private void processAsTomato(final Message msg, final ExecResult result) throws MessagingException {
-        logger.info("TOMATO");
+        logger.info("TOMATO [" + result.getScore() + "]");
         genericProcess(cmdArgs.getTomatoActions(), msg, getTomatoFolder(), result);
     }
 
     private void processAsHam(final Message msg, final ExecResult result) throws MessagingException {
-        logger.info("HAM");
+        logger.info("HAM [" + result.getScore() + "]");
         genericProcess(cmdArgs.getHamActions(), msg, getHamFolder(), result);
     }
 
@@ -112,6 +112,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     if (copyOfMessage == null) {
                         copyOfMessage = new MimeMessage((MimeMessage) msg);
                     }
+                    copyOfMessage.removeHeader("X-ImapRSpamd");
                     copyOfMessage.addHeader("X-ImapRSpamd", result.getHeaderText());
                 }
                 case "rewriteSubject" -> {

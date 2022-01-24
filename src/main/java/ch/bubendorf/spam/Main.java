@@ -14,7 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 public class Main {
@@ -23,7 +27,6 @@ public class Main {
     private final static Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(final String[] args) throws MessagingException, IOException, InterruptedException {
-
         logger.info("ImapRSpamd Version " + BuildVersion.getBuildVersion());
         new Main().imapRSpamd(args);
         logger.info("Done");
@@ -33,7 +36,23 @@ public class Main {
         final JCommander jCommander = new JCommander(cmdArgs);
         jCommander.setAcceptUnknownOptions(true);
         jCommander.setAllowAbbreviatedOptions(true);
-        jCommander.parse(args);
+        jCommander.setExpandAtSign(true);
+        jCommander.setAllowParameterOverwriting(true);
+
+        final List<String> allArgs = new ArrayList<>();
+        for (final String file : new String[]{"/etc/imaprspamd/default.conf",
+                System.getProperty("user.home") + File.separator + "default.conf",
+                "default.conf",
+                "/etc/imaprspamd/local.conf",
+                System.getProperty("user.home") + File.separator + "local.conf",
+                "local.conf"}) {
+            if (new File(file).exists()) {
+                allArgs.add("@" + file);
+            }
+        }
+
+        allArgs.addAll(Arrays.asList(args));
+        jCommander.parse(allArgs.toArray(new String[allArgs.size()]));
 
         if (jCommander.getUnknownOptions().size() > 0) {
             for (final String arg : jCommander.getUnknownOptions()) {

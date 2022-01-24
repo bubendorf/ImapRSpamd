@@ -30,8 +30,11 @@ public class ExecResult {
 
     private final Pattern ACTION_PATTERN = Pattern.compile("^Action: ([\\p{Alnum}]+)$", Pattern.MULTILINE);
     private final Pattern SPAM_PATTERN = Pattern.compile("^Spam: ([\\p{Alnum}]+)$", Pattern.MULTILINE);
+    private final Pattern SUCCESS_PATTERN = Pattern.compile("^success = ([\\p{Alnum}]+);$", Pattern.MULTILINE);
     private final Pattern SCORE_PATTERN = Pattern.compile("^Score: ([0-9.]+) / ([0-9.]+)$", Pattern.MULTILINE);
+    private final Pattern SCAN_TIME_PATTERN = Pattern.compile("^scan_time = ([0-9.]+);$", Pattern.MULTILINE);
     private final Pattern SYMBOL_PATTERN = Pattern.compile("^Symbol: (.+)$", Pattern.MULTILINE);
+    private final Pattern ERROR_PATTERN = Pattern.compile("^error = \"(.+)\";$", Pattern.MULTILINE);
 
     public String getAction() {
         final Matcher matcher = ACTION_PATTERN.matcher(stdout);
@@ -77,7 +80,31 @@ public class ExecResult {
         }
         return null;
     }
-    
+
+    public boolean isSuccess() {
+        final Matcher matcher = SUCCESS_PATTERN.matcher(stdout);
+        if (matcher.find()) {
+            return Boolean.parseBoolean(matcher.group(1));
+        }
+        return false;
+    }
+
+    public double getScanTime() {
+        final Matcher matcher = SCAN_TIME_PATTERN.matcher(stdout);
+        if (matcher.find()) {
+            return Double.parseDouble(matcher.group(1));
+        }
+        return 0.0;
+    }
+
+    public String getError() {
+        final Matcher matcher = ERROR_PATTERN.matcher(stdout);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
     public String getHeaderText() {
         final StringBuilder sb = new StringBuilder(256);
         sb.append("Spam: ").append(isSpam()).append(", ");
@@ -99,13 +126,6 @@ public class ExecResult {
         if (sb.toString().endsWith(", ")) {
             sb.setLength(sb.length() - 2);
         }
-        /*if (sb.toString().endsWith("\t")) {
-            sb.setLength(sb.length() - 1);
-        }
-        if (sb.toString().endsWith("\n")) {
-            sb.setLength(sb.length() - 1);
-        }*/
-
         return sb.toString().trim();
     }
 }
