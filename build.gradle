@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+}
+plugins {
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+}
+plugins {
+    id "com.github.ben-manes.versions" version "0.41.0"
+    // Usage: gradle dependencyUpdates  -Drevision=release
+}
+
+apply plugin: 'application'
+
+group 'ch.bubendorf.spam'
+version '1.0-SNAPSHOT'
+
+compileJava {
+    sourceCompatibility = 17
+    targetCompatibility = 17
+}
+compileJava.options.encoding = 'UTF-8'
+
+shadowJar {
+    mainClassName = 'ch.bubendorf.spam.Main'
+    manifest {
+        attributes("Implementation-Title": "ImapRSpamd",
+                "Implementation-Version": archiveVersion.get()
+        )
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.xerial:sqlite-jdbc:3.36.0.3"
+    implementation "com.beust:jcommander:1.82"
+    implementation "org.slf4j:slf4j-simple:2.0.0-alpha6"
+    implementation 'com.sun.mail:jakarta.mail:2.0.1'
+    implementation 'com.sun.mail:imap:2.0.1'
+    implementation 'org.apache.commons:commons-collections4:4.4'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'com.github.sisyphsu:dateparser:1.0.9'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+}
+
+test {
+    useJUnitPlatform()
+}

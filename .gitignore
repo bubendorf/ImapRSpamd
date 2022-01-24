@@ -1,0 +1,15 @@
+*.class
+*.ear
+*.jar
+*.lst
+*.war
+.gradle
+.idea
+.mtj.tmp/
+/shelf/
+/workspace.xml
+build
+hs_err_pid*
+lib/
+target/
+out/
