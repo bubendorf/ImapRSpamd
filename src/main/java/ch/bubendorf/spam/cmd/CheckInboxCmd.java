@@ -81,9 +81,10 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 case "copy" -> {
                     if (copyOfMessage == null) {
                         // Directly copy the message on the server
-                        folder.copyMessages(new Message[]{msg}, destFolder);
+                        srcFolder.copyMessages(new Message[]{msg}, destFolder);
                     } else {
                         // Add the copy of the message to the destination folder
+                        openFolder(destFolder);
                         destFolder.addMessages(new Message[]{copyOfMessage});
                     }
                     logger.debug("Copy to " + destFolder.getName());
@@ -94,22 +95,29 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 case "update" -> {
                     if (copyOfMessage != null) {
                         // Add the copy of the message to the source folder and delete the original
-                        folder.addMessages(new Message[]{copyOfMessage});
+                        openFolder(srcFolder);
+                        srcFolder.addMessages(new Message[]{copyOfMessage});
                         msg.setFlag(Flags.Flag.DELETED, true);
-                        logger.debug("Update in " + folder.getName());
+                        logger.debug("Update in " + srcFolder.getName());
                     }
                 }
                 case "addHeader" -> {
-                    if (copyOfMessage == null) {
-                        copyOfMessage = new MimeMessage((MimeMessage) msg);
+                    final String[] existingHeaders = msg.getHeader("X-ImapRSpamd");
+                    final String newHeader = result.getHeaderText();
+                    if (existingHeaders == null || !existingHeaders[0].equals(newHeader)) {
+                        if (copyOfMessage == null) {
+                            copyOfMessage = new MimeMessage((MimeMessage) msg);
+                            copyOfMessage.setFlags(imapRSpamdFlag, true);
+                        }
+                        copyOfMessage.removeHeader("X-ImapRSpamd");
+                        copyOfMessage.addHeader("X-ImapRSpamd", newHeader);
+                        logger.debug("Add X-ImapRSpamd header");
                     }
-                    copyOfMessage.removeHeader("X-ImapRSpamd");
-                    copyOfMessage.addHeader("X-ImapRSpamd", result.getHeaderText());
-                    logger.debug("Add X-ImapRSpamd header");
                 }
                 case "rewriteSubject" -> {
                     if (copyOfMessage == null) {
                         copyOfMessage = new MimeMessage((MimeMessage) msg);
+                        copyOfMessage.setFlags(imapRSpamdFlag, true);
                     }
                     final String newSubject = getNewSubject(msg, result);
                     copyOfMessage.setSubject(newSubject);
@@ -129,16 +137,23 @@ public class CheckInboxCmd extends BaseFolderCommand {
         }
     }
 
-    private void moveTo(final MimeMessage copyOfMessage, final Message msg, final IMAPFolder folder) throws MessagingException {
+    private void openFolder(final Folder folder) throws MessagingException {
+        if (!folder.isOpen()) {
+            folder.open(Folder.READ_WRITE);
+        }
+    }
+
+    private void moveTo(final MimeMessage copyOfMessage, final Message msg, final IMAPFolder destFolder) throws MessagingException {
         if (copyOfMessage == null) {
             // Directly move the message on the server to the destination folder
-            folder.moveMessages(new Message[]{msg}, folder);
+            srcFolder.moveMessages(new Message[]{msg}, destFolder);
         } else {
             // Add the copy of the message to the destination folder and delete the original
-            folder.addMessages(new Message[]{copyOfMessage});
+            openFolder(destFolder);
+            destFolder.addMessages(new Message[]{copyOfMessage});
             msg.setFlag(Flags.Flag.DELETED, true);
         }
-        logger.debug("Move to " + folder.getName());
+        logger.debug("Move to " + destFolder.getName());
     }
 
     private String getNewSubject(final Message msg, final ExecResult result) throws MessagingException {
@@ -173,32 +188,32 @@ public class CheckInboxCmd extends BaseFolderCommand {
     private IMAPFolder getHamFolder() throws MessagingException {
         if (hamFolder == null) {
             hamFolder = (IMAPFolder)store.getFolder(cmdArgs.getHamFolder());
-            hamFolder.open(Folder.READ_WRITE);
         }
+//            hamFolder.open(Folder.READ_WRITE);
         return hamFolder;
     }
 
     private IMAPFolder getSpamFolder() throws MessagingException {
         if (spamFolder == null) {
             spamFolder = (IMAPFolder)store.getFolder(cmdArgs.getSpamFolder());
-            spamFolder.open(Folder.READ_WRITE);
         }
+//            spamFolder.open(Folder.READ_WRITE);
         return spamFolder;
     }
 
     private IMAPFolder getTomatoFolder() throws MessagingException {
         if (tomatoFolder == null) {
             tomatoFolder = (IMAPFolder)store.getFolder(cmdArgs.getTomatoFolder());
-            tomatoFolder.open(Folder.READ_WRITE);
         }
+//            tomatoFolder.open(Folder.READ_WRITE);
         return tomatoFolder;
     }
 
     private IMAPFolder getTrashFolder() throws MessagingException {
         if (trashFolder == null) {
             trashFolder = (IMAPFolder)store.getFolder(cmdArgs.getTomatoFolder());
-            trashFolder.open(Folder.READ_WRITE);
         }
+//            trashFolder.open(Folder.READ_WRITE);
         return trashFolder;
     }
 }

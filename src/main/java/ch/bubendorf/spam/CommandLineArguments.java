@@ -79,15 +79,19 @@ public class CommandLineArguments {
     private String rspamc = "rspamc";
     // Von Windows aus: ssh mbu@n020 rspamc
 
-    @Parameter(names = "--maxMessages", description = "Process at most this many message")
+    @Parameter(names = "--maxMessages", description = "Process at most this many messages")
     private int maxMessages = Integer.MAX_VALUE;
 
-    @Parameter(names = "--skipMessages", description = "Skip that many message")
+    @Parameter(names = "--skipMessages", description = "Skip that many messages")
     private int skipMessages = 0;
 
-    @Parameter(names = "--receivedDateAfter", description = "Skip messages received before that date")
+    @Parameter(names = "--receivedDateAfter", description = "Skip messages received before the date/time")
     private String receivedDateAfter = null;
     private Date receivedDateAfterDate = null;
+
+    @Parameter(names = "--receivedDateBefore", description = "Skip messages received after the date/time")
+    private String receivedDateBefore = null;
+    private Date receivedDateBeforeDate = null;
 
     @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash")
     private List<String> hamActions = new ArrayList<>();
@@ -222,6 +226,13 @@ public class CommandLineArguments {
             receivedDateAfterDate = DateParserUtils.parseDate(receivedDateAfter);
         }
         return receivedDateAfterDate;
+    }
+
+    public Date getReceivedDateBefore() {
+        if (receivedDateBefore != null && receivedDateBeforeDate == null) {
+            receivedDateBeforeDate = DateParserUtils.parseDate(receivedDateBefore);
+        }
+        return receivedDateBeforeDate;
     }
 
     public boolean isStarttls() {

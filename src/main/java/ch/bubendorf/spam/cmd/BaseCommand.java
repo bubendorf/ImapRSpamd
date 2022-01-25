@@ -66,4 +66,13 @@ public abstract class BaseCommand {
         return receivedDate == null || !receivedDate.before(cmdArgs.getReceivedDateAfter());
     }
 
+    protected boolean isReceivedBefore(final Message msg) throws MessagingException {
+        if (cmdArgs.getReceivedDateBefore() == null) {
+            // No receivedBefore date specified ==> Process it
+            return true;
+        }
+        final Date receivedDate = msg.getReceivedDate();
+        return receivedDate == null || !receivedDate.after(cmdArgs.getReceivedDateBefore());
+    }
+
 }

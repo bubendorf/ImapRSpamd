@@ -108,14 +108,14 @@ public class ExecResult {
     public String getHeaderText() {
         final StringBuilder sb = new StringBuilder(256);
         sb.append("Spam: ").append(isSpam()).append(", ");
-        sb.append("Score: ").append(getScore()).append("\n\t ");
+        sb.append("Score: ").append(getScore()).append("\r\n\t ");
 
         final StringBuilder symbolsSB = new StringBuilder(256);
         for (final String symbol : getSymbols()) {
             symbolsSB.append(symbol).append(", ");
             if (symbolsSB.length() >= 100) {
                 sb.setLength(sb.length() - 1);
-                sb.append(symbolsSB).append("\n\t ");
+                sb.append(symbolsSB).append("\r\n\t ");
                 symbolsSB.setLength(0);
             }
         }
@@ -123,9 +123,10 @@ public class ExecResult {
             sb.append(symbolsSB);
         }
 
-        if (sb.toString().endsWith(", ")) {
-            sb.setLength(sb.length() - 2);
+        String text = sb.toString().trim();
+        if (text.endsWith(",")) {
+            text = text.substring(0, text.length() - 1);
         }
-        return sb.toString().trim();
+        return text;
     }
 }

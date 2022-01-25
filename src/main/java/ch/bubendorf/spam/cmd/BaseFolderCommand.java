@@ -16,7 +16,7 @@ import java.util.Enumeration;
 
 public abstract class BaseFolderCommand extends BaseCommand {
     protected final IMAPStore store;
-    protected IMAPFolder folder;
+    protected IMAPFolder srcFolder;
 
     protected BaseFolderCommand(final CommandLineArguments cmdArgs, final IMAPStore store) {
         super(cmdArgs);
@@ -24,14 +24,15 @@ public abstract class BaseFolderCommand extends BaseCommand {
     }
 
     public void run() throws MessagingException, IOException, InterruptedException {
-        folder = (IMAPFolder)store.getFolder(getFolderName());
-        folder.open(Folder.READ_WRITE);
-        final Message[] messages = folder.getMessages();
+        srcFolder = (IMAPFolder)store.getFolder(getFolderName());
+        srcFolder.open(Folder.READ_WRITE);
+        final Message[] messages = srcFolder.getMessages();
         int count = 0;
         int skipped = 0;
         for (final Message msg : messages) {
-            if (cmdArgs.isForce() || (isEligible(msg) && isReceivedAfter(msg))) {
+            if (cmdArgs.isForce() || (isEligible(msg) && isReceivedAfter(msg) && isReceivedBefore(msg))) {
                 if (cmdArgs.getSkipMessages() > skipped) {
+                    logger.debug("Skipped " + getMessageId(msg) + ": " + msg.getSubject());
                     skipped++;
                     continue;
                 }
@@ -42,10 +43,12 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 logger.info(getMessageId(msg) + ": " + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
                 apply(msg, sb.toString());
+            } else {
+                logger.debug("Skipped " + getMessageId(msg) + ": " + msg.getSubject());
             }
         }
         close();
-        folder.close(true);
+        srcFolder.close(true);
     }
 
     protected void close() throws MessagingException {
@@ -53,7 +56,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
     }
 
     protected boolean isEligible(final Message msg) throws MessagingException {
-        return true;
+        return true; // Override in subclass!
     }
 
     protected abstract String getFolderName();

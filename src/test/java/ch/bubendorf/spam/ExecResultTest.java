@@ -82,17 +82,15 @@ public class ExecResultTest {
 
     @Test
     public void getHeaderText() {
-        assertEquals("Spam: true, Score: 24.99, ABUSE_SURBL (5.50)[yourtopicgroup.com.de:url], ARC_NA (0.00), " +
-                "ARC_SIGNED (0.00)[i=1], ASN (0.00)[asn:138749, ipnet:103.141.227.0/24, country:IN], BAYES_SPAM (5.07)[99.93%], " +
-                "DATE_IN_PAST (1.00), DKIM_TRACE (0.00)[yourtopicgroup.com.de:-], DMARC_POLICY_QUARANTINE (1.50)" +
-                "[yourtopicgroup.com.de : No valid SPF, quarantine], FROM_HAS_DN (0.00), FUZZY_DENIED (7.66)" +
-                "[1:a1d6f40e6d:0.53:txt], HAS_LIST_UNSUB (-0.01), HAS_REPLYTO (0.00)[reply@yourtopicgroup.com.de], " +
-                "HTML_SHORT_LINK_IMG_1 (2.00), MANY_INVISIBLE_PARTS (0.30)[4], MID_RHS_MATCH_FROM (0.00), " +
-                "MIME_GOOD (-0.10)[multipart/alternative, text/plain], MIME_TRACE (0.00)[0:+, 1:+, 2:~], " +
-                "ONCE_RECEIVED (0.10), PREVIOUSLY_DELIVERED (0.00)[markus@bubendorf.ch], RCPT_COUNT_ONE (0.00)[1], " +
-                "RCVD_COUNT_ONE (0.00)[1], RCVD_TLS_ALL (0.00), REPLYTO_DOM_EQ_FROM_DOM (0.00), RWL_MAILSPIKE_POSSIBLE " +
-                "(0.00)[103.141.227.65:from], R_DKIM_REJECT (1.00)[yourtopicgroup.com.de:s=key], R_PARTS_DIFFER (0.97)" +
-                "[98.6%], R_SPF_NA (0.00)[No domain], SUBJECT_ENDS_EXCLAIM (0.00), TO_DN_NONE (0.00)",
+        assertEquals("Spam: true, Score: 24.99\r\n" +
+                        "\tABUSE_SURBL (5.50)[yourtopicgroup.com.de:url], ARC_NA (0.00), ARC_SIGNED (0.00)[i=1], ASN (0.00)[asn:138749, ipnet:103.141.227.0/24, country:IN], \r\n" +
+                        "\tBAYES_SPAM (5.07)[99.93%], DATE_IN_PAST (1.00), DKIM_TRACE (0.00)[yourtopicgroup.com.de:-], DMARC_POLICY_QUARANTINE (1.50)[yourtopicgroup.com.de : No valid SPF, quarantine], \r\n" +
+                        "\tFROM_HAS_DN (0.00), FUZZY_DENIED (7.66)[1:a1d6f40e6d:0.53:txt], HAS_LIST_UNSUB (-0.01), HAS_REPLYTO (0.00)[reply@yourtopicgroup.com.de], \r\n" +
+                        "\tHTML_SHORT_LINK_IMG_1 (2.00), MANY_INVISIBLE_PARTS (0.30)[4], MID_RHS_MATCH_FROM (0.00), MIME_GOOD (-0.10)[multipart/alternative, text/plain], \r\n" +
+                        "\tMIME_TRACE (0.00)[0:+, 1:+, 2:~], ONCE_RECEIVED (0.10), PREVIOUSLY_DELIVERED (0.00)[markus@bubendorf.ch], \r\n" +
+                        "\tRCPT_COUNT_ONE (0.00)[1], RCVD_COUNT_ONE (0.00)[1], RCVD_TLS_ALL (0.00), REPLYTO_DOM_EQ_FROM_DOM (0.00), \r\n" +
+                        "\tRWL_MAILSPIKE_POSSIBLE (0.00)[103.141.227.65:from], R_DKIM_REJECT (1.00)[yourtopicgroup.com.de:s=key], \r\n" +
+                        "\tR_PARTS_DIFFER (0.97)[98.6%], R_SPF_NA (0.00)[No domain], SUBJECT_ENDS_EXCLAIM (0.00), TO_DN_NONE (0.00)",
                 execResult.getHeaderText());
     }
 
