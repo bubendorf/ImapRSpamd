@@ -20,7 +20,7 @@ public class LearnSpamCmd extends BaseFolderCommand {
 
     @Override
     protected ExecResult apply(final Message msg, final String messageText) throws IOException, InterruptedException {
-        final ExecResult result = execRSpamd("learn_spam", messageText);
+        final ExecResult result = execRSpamd("learn_spam --pass-all", messageText);
         logger.info("Success = " + result.isSuccess() + ", ScanTime = " + result.getScanTime());
         if (!result.isSuccess()) {
             logger.info(result.getError());
