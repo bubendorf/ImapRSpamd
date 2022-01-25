@@ -41,8 +41,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 }
                 logger.info(getMessageId(msg) + ": " + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
-                final ExecResult result = apply(msg, sb.toString());
-//                logger.info(result.getStdout());
+                apply(msg, sb.toString());
             }
         }
         close();

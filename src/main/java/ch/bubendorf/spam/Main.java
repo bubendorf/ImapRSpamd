@@ -52,6 +52,7 @@ public class Main {
         }
 
         allArgs.addAll(Arrays.asList(args));
+        //noinspection ToArrayCallWithZeroLengthArrayArgument
         jCommander.parse(allArgs.toArray(new String[allArgs.size()]));
 
         if (jCommander.getUnknownOptions().size() > 0) {

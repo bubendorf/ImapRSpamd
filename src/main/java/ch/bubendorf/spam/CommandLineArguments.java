@@ -60,6 +60,9 @@ public class CommandLineArguments {
     @Parameter(names = {"-i", "--inbox", "--inboxFolder"}, description = "Name of the INBOX folder", arity = 1)
     private String inboxFolder = "INBOX";
 
+    @Parameter(names = {"--idleFolder"}, description = "Name of the IDLE folder", arity = 1)
+    private String idleFolder = null;
+
     @Parameter(names = {"--tomatoFolder"}, description = "Name of the TOMATO folder", arity = 1)
     private String tomatoFolder = "Junk";
 
@@ -68,6 +71,9 @@ public class CommandLineArguments {
 
     @Parameter(names = "--hamFolder", description = "Name of the HAM folder")
     private String hamFolder = "ham";
+
+    @Parameter(names = "--trashFolder", description = "Name of the TRASH folder")
+    private String trashFolder = "Trash";
 
     @Parameter(names = "--rspamc", description = "Commandline for rspamc")
     private String rspamc = "rspamc";
@@ -83,13 +89,13 @@ public class CommandLineArguments {
     private String receivedDateAfter = null;
     private Date receivedDateAfterDate = null;
 
-    @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete")
+    @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash")
     private List<String> hamActions = new ArrayList<>();
 
-    @Parameter(names = {"--tomatoAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete")
+    @Parameter(names = {"--tomatoAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash")
     private List<String> tomatoActions = new ArrayList<>();
 
-    @Parameter(names = {"--spamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete")
+    @Parameter(names = {"--spamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash")
     private List<String> spamActions = new ArrayList<>();
 
     @Parameter(names = "--tomatoScore", description = "Tomato score")
@@ -102,6 +108,10 @@ public class CommandLineArguments {
     private String newSubject = "[SPAM %c] %s";
 
     public void setDefaults() {
+        if (idleFolder == null) {
+            idleFolder = inboxFolder;
+        }
+
         if (tomatoActions.isEmpty()) {
             tomatoActions.add("addHeader");
             tomatoActions.add("move");
@@ -252,5 +262,13 @@ public class CommandLineArguments {
 
     public String getNewSubject() {
         return newSubject;
+    }
+
+    public String getIdleFolder() {
+        return idleFolder;
+    }
+
+    public String getTrashFolder() {
+        return trashFolder;
     }
 }
