@@ -16,13 +16,13 @@ import java.util.regex.Pattern;
  */
 public class Symbol {
 
-    private static final Pattern SYMBOL_SPLIT_PATTERN = Pattern.compile("([A-Za-z0-9_]+)\\s*([(]([0-9.-]+)[)])?(\\[(.+)\\])?");
+    private static final Pattern SYMBOL_SPLIT_PATTERN = Pattern.compile("([A-Za-z0-9_]+)\\s*([(]([0-9.-]+)[)])?(\\[(.+)])?");
 
-    private static Map<String, Function<String, String>> descFormatters= new HashMap<>();
-    {
+    /*private static final Map<String, Function<String, String>> descFormatters= new HashMap<>();
+    static {
         descFormatters.put("R_SPF_ALLOW", in -> in.replaceAll(":[a-z]$", ""));
         descFormatters.put("DCC_REJECT", in -> null);
-    }
+    }*/
 
     private final String name;
     private final double score;
@@ -33,7 +33,7 @@ public class Symbol {
         if (matcher.matches()) {
             name = matcher.group(1);
             score = matcher.groupCount() > 2 && matcher.group(3) != null ? Double.parseDouble(matcher.group(3)) : Double.NaN;
-            desc = matcher.groupCount() > 4 && matcher.group(5) != null ? matcher.group(5).replaceAll("\\s","") : null;
+            desc = matcher.groupCount() > 4 && matcher.group(5) != null ? matcher.group(5).trim() : null;
         } else {
             name = symbol;
             score = Double.NaN;
@@ -52,11 +52,11 @@ public class Symbol {
         return name + (Double.isNaN(score) ? "" : " (" + score + ")");
     }
 
-    @NonNull
+    /*@NonNull
     public String getFormatted() {
         final String formattedDesc = desc == null ? null : descFormatters.getOrDefault(name, in->in).apply(desc);
         return name + (Double.isNaN(score) ? "" : " (" + score + ")") + (formattedDesc == null ? "" : "[" + formattedDesc + "]");
-    }
+    }*/
 
     @NonNull
     public String getName() {

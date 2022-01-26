@@ -112,7 +112,7 @@ public class ExecResult {
 
         final StringBuilder symbolsSB = new StringBuilder(256);
         for (final Symbol symbol : getSymbols()) {
-            symbolsSB.append(symbol.getFormatted()).append(", ");
+            symbolsSB.append(symbol.toString()).append(", ");
             if (symbolsSB.length() >= 100) {
                 sb.setLength(sb.length() - 1);
                 sb.append(symbolsSB).append("\r\n\t ");
