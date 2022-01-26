@@ -9,6 +9,7 @@ import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.jetbrains.annotations.NotNull;
 
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.List;
 public class CheckInboxCmd extends BaseFolderCommand {
 
     private static final Flags imapRSpamdFlag = new Flags("ImapRSpamd");
+    public static final String X_IMAP_RSPAMD = "X-ImapRSpamd";
 
     private IMAPFolder hamFolder;
     private IMAPFolder tomatoFolder;
@@ -102,21 +104,23 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     }
                 }
                 case "addHeader" -> {
-                    final String[] existingHeaders = msg.getHeader("X-ImapRSpamd");
+                    final String[] existingHeaders = msg.getHeader(X_IMAP_RSPAMD);
                     final String newHeader = result.getHeaderText();
-                    if (existingHeaders == null || !existingHeaders[0].equals(newHeader)) {
+                    if (existingHeaders == null || !equalScore(existingHeaders[0], newHeader)) {
                         if (copyOfMessage == null) {
                             copyOfMessage = new MimeMessage((MimeMessage) msg);
+                            copyFlags(msg, copyOfMessage);
                             copyOfMessage.setFlags(imapRSpamdFlag, true);
                         }
-                        copyOfMessage.removeHeader("X-ImapRSpamd");
-                        copyOfMessage.addHeader("X-ImapRSpamd", newHeader);
-                        logger.debug("Add X-ImapRSpamd header");
+                        copyOfMessage.removeHeader(X_IMAP_RSPAMD);
+                        copyOfMessage.addHeader(X_IMAP_RSPAMD, newHeader);
+                        logger.debug("Add " + X_IMAP_RSPAMD + " header");
                     }
                 }
                 case "rewriteSubject" -> {
                     if (copyOfMessage == null) {
                         copyOfMessage = new MimeMessage((MimeMessage) msg);
+                        copyFlags(msg, copyOfMessage);
                         copyOfMessage.setFlags(imapRSpamdFlag, true);
                     }
                     final String newSubject = getNewSubject(msg, result);
@@ -135,6 +139,41 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 }
             }
         }
+    }
+
+    private boolean equalScore(final @NotNull String a, final String b) {
+        final String[] as = a.split("\n|\r|\r\n");
+        final String[] bs = b.split("\n|\n|\r\n");
+        return as[0].equals(bs[0]);
+    }
+
+    private boolean equalsNoWhiteSpace(final String a, final String b) {
+        //noinspection StringEquality
+        if (a == b) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }
+        final String a2 = a.replaceAll("\\s","");
+        final String b2 = b.replaceAll("\\s","");
+        return a2.equals(b2);
+    }
+
+    private void copyFlags(final Message srcMessage, final MimeMessage destMessage) throws MessagingException {
+        final Flags srcFlags = srcMessage.getFlags();
+        destMessage.setFlags(srcFlags, true);
+//        destMessage.setFlag(Flags.Flag.SEEN, false);
+        logger.debug("SrcFlags: " + srcFlags.toString() + ", DestFlag: " + destMessage.getFlags().toString());
+
+  /*      for (final Flags.Flag flag : srcFlags.getSystemFlags()) {
+            logger.debug(flag.toString() + " : " + srcMessage.isSet(flag));
+            destMessage.setFlag(flag, srcMessage.isSet(flag));
+        }*/
+/*        for (final String userFlag : srcMessage.getFlags().getUserFlags()){
+            final Flags flags = new Flags(userFlag);
+            destMessage.setFlags(flags, srcMessage.isSet(flags.g));
+        }*/
     }
 
     private void openFolder(final Folder folder) throws MessagingException {

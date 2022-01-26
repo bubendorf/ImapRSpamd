@@ -4,11 +4,9 @@ import ch.bubendorf.spam.CommandLineArguments;
 import ch.bubendorf.spam.ExecResult;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
-import jakarta.mail.Folder;
-import jakarta.mail.Header;
-import jakarta.mail.Message;
-import jakarta.mail.MessagingException;
+import jakarta.mail.*;
 import org.apache.commons.lang3.ArrayUtils;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +30,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
         for (final Message msg : messages) {
             if (cmdArgs.isForce() || (isEligible(msg) && isReceivedAfter(msg) && isReceivedBefore(msg))) {
                 if (cmdArgs.getSkipMessages() > skipped) {
-                    logger.debug("Skipped " + getMessageId(msg) + ": " + msg.getSubject());
+                    logger.debug("Skipped " + getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                     skipped++;
                     continue;
                 }
@@ -40,15 +38,24 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 if (count > cmdArgs.getMaxMessages()) {
                     break;
                 }
-                logger.info(getMessageId(msg) + ": " + msg.getSubject());
+                logger.debug(getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
                 apply(msg, sb.toString());
             } else {
-                logger.debug("Skipped " + getMessageId(msg) + ": " + msg.getSubject());
+                logger.debug("Skipped " + getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
             }
         }
         close();
         srcFolder.close(true);
+    }
+
+    @NonNull
+    protected String getFrom(final Message msg) throws MessagingException {
+        final Address[] from = msg.getFrom();
+        if (from == null || from.length == 0) {
+            return "";
+        }
+        return from[0].toString();
     }
 
     protected void close() throws MessagingException {

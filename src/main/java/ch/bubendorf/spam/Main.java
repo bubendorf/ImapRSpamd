@@ -5,13 +5,10 @@ import ch.bubendorf.spam.cmd.LearnSpamCmd;
 import ch.bubendorf.spam.cmd.CheckInboxCmd;
 import ch.bubendorf.spam.cmd.StatCmd;
 import com.beust.jcommander.JCommander;
-import com.sun.mail.iap.ProtocolException;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
 import com.sun.mail.imap.IdleManager;
-import com.sun.mail.imap.protocol.IMAPProtocol;
 import jakarta.mail.Folder;
-import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.event.MessageCountAdapter;
@@ -29,16 +26,17 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main {
 
     private final CommandLineArguments cmdArgs = new CommandLineArguments();
     private final static Logger logger = LoggerFactory.getLogger(Main.class);
 
-    private boolean goOn = false;
+    private boolean stayInMainLoop = false;
     private IdleManager idleManager;
+    private ExecutorService execService;
     private final Object idleLock = new Object();
+    private boolean keepOnIdeling;
     private IMAPFolder idleFolder;
 
     public static void main(final String[] args) throws MessagingException, IOException, InterruptedException {
@@ -115,15 +113,27 @@ public class Main {
     private void installSignalHandlers() {
         Signal.handle(new Signal("TERM"), sig -> {
             logger.info("Received TERM signal!");
-            goOn = false;
+            stayInMainLoop = false;
             synchronized (idleLock) {
                 idleLock.notifyAll();
             }
-
-            if (idleManager != null) {
-                idleManager.stop();
-            }
+            shutdownIdleManager();
+            shutdownExecService();
         });
+    }
+
+    private void shutdownIdleManager() {
+        if (idleManager != null) {
+            idleManager.stop();
+            idleManager = null;
+        }
+    }
+
+    private void shutdownExecService() {
+        if (execService != null) {
+            execService.shutdown();
+            execService = null;
+        }
     }
 
     private void mainLoop(final Session session, final IMAPStore store) throws MessagingException, IOException, InterruptedException {
@@ -139,7 +149,9 @@ public class Main {
                     default -> unknownCommand(cmd);
                 }
             }
-        } while (goOn);
+        } while (stayInMainLoop);
+        shutdownIdleManager();
+        shutdownExecService();
     }
 
     private void learnSpam(final IMAPStore store) throws MessagingException, IOException, InterruptedException {
@@ -163,27 +175,30 @@ public class Main {
     }
 
     private void idle(final Session session, final IMAPStore store) throws IOException, MessagingException {
-        goOn = true;
+        stayInMainLoop = true;
+        keepOnIdeling = true;
 
-        final AtomicBoolean keepOnWaiting = new AtomicBoolean(true);
-
-        final ExecutorService es = Executors.newCachedThreadPool();
-        idleManager = new IdleManager(session, es);
-        final IMAPFolder folder = getIdleFolder(store);
-        final MessageCountAdapter messageCountAdapter = new MessageCountAdapter() {
-            public void messagesAdded(final MessageCountEvent ev) {
-                logger.debug("Message Count Changed");
-                keepOnWaiting.set(false);
-                synchronized (idleLock) {
-                    idleLock.notifyAll();
+        if (execService == null) {
+            execService = Executors.newCachedThreadPool();
+        }
+        final IMAPFolder idleFolder = getIdleFolder(store);
+        if (idleManager == null) {
+            idleManager = new IdleManager(session, execService);
+            final MessageCountAdapter messageCountAdapter = new MessageCountAdapter() {
+                public void messagesAdded(final MessageCountEvent ev) {
+                    logger.debug("Message Count Changed");
+                    keepOnIdeling = false;
+                    synchronized (idleLock) {
+                        idleLock.notifyAll();
+                    }
                 }
-            }
-        };
-        folder.addMessageCountListener(messageCountAdapter);
+            };
+            idleFolder.addMessageCountListener(messageCountAdapter);
+        }
 
-        while (idleManager.isRunning() && keepOnWaiting.get()) {
+        while (idleManager.isRunning() && keepOnIdeling) {
             logger.debug("Watch IDLE folder");
-            idleManager.watch(folder);
+            idleManager.watch(idleFolder);
             try {
                 synchronized (idleLock) {
                     logger.debug("Before lock()");
@@ -194,23 +209,22 @@ public class Main {
                 e.printStackTrace();
             }
 
-            if (idleManager.isRunning() && keepOnWaiting.get()) {
-                // Keep the conection alive
+            if (idleManager.isRunning() && keepOnIdeling) {
+                // Keep the connection alive by sending an IMAP noop
                 final IMAPFolder.ProtocolCommand noop = protocol -> {
                     logger.debug("Sending NoOp");
                     protocol.simpleCommand("NOOP", null);
                     return null;
                 };
-                folder.doCommand(noop);
+                idleFolder.doCommand(noop);
             }
         }
 
         logger.debug("Finish ideling");
 
-        folder.removeMessageCountListener(messageCountAdapter);
+/*        idleFolder.removeMessageCountListener(messageCountAdapter);
         idleManager.stop();
-        idleManager = null;
-        es.shutdown();
+        idleManager = null;*/
     }
 
     private IMAPFolder getIdleFolder(final IMAPStore store) throws MessagingException {

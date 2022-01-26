@@ -68,13 +68,13 @@ public class ExecResult {
         return 0.0;
     }
 
-    public List<String> getSymbols() {
+    public List<Symbol> getSymbols() {
         final Matcher matcher = SYMBOL_PATTERN.matcher(stdout);
         if (matcher.find()) {
-            final List<String> symbols = new ArrayList<>();
-            symbols.add(matcher.group(1));
+            final List<Symbol> symbols = new ArrayList<>();
+            symbols.add(new Symbol(matcher.group(1)));
             while (matcher.find()){
-                symbols.add(matcher.group(1));
+                symbols.add(new Symbol(matcher.group(1)));
             }
             return symbols;
         }
@@ -111,8 +111,8 @@ public class ExecResult {
         sb.append("Score: ").append(getScore()).append("\r\n\t ");
 
         final StringBuilder symbolsSB = new StringBuilder(256);
-        for (final String symbol : getSymbols()) {
-            symbolsSB.append(symbol).append(", ");
+        for (final Symbol symbol : getSymbols()) {
+            symbolsSB.append(symbol.getFormatted()).append(", ");
             if (symbolsSB.length() >= 100) {
                 sb.setLength(sb.length() - 1);
                 sb.append(symbolsSB).append("\r\n\t ");
