@@ -106,7 +106,7 @@ public class CommandLineArguments {
     private double tomatoScore = 6.0;
 
     @Parameter(names = "--spamScore", description = "Spam score")
-    private double spamScore = 6.0;
+    private double spamScore = 15.0;
 
     @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original Subject, %c=Score")
     private String newSubject = "[SPAM %c] %s";

@@ -18,7 +18,9 @@ import java.util.List;
 public class CheckInboxCmd extends BaseFolderCommand {
 
     private static final Flags imapRSpamdFlag = new Flags("ImapRSpamd");
-    public static final String X_IMAP_RSPAMD = "X-ImapRSpamd";
+    public static final String X_IMAP_RSPAMD_SPAM = "X-ImapRSpamd-Spam";
+    public static final String X_IMAP_RSPAMD_SCORE = "X-ImapRSpamd-Score";
+    public static final String X_IMAP_RSPAMD_SYMBOLS = "X-ImapRSpamd-Symbols";
 
     private IMAPFolder hamFolder;
     private IMAPFolder tomatoFolder;
@@ -98,23 +100,34 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     if (copyOfMessage != null) {
                         // Add the copy of the message to the source folder and delete the original
                         openFolder(srcFolder);
+
+                        copyOfMessage.setFlag(Flags.Flag.SEEN, false);
                         srcFolder.addMessages(new Message[]{copyOfMessage});
+
                         msg.setFlag(Flags.Flag.DELETED, true);
+                        
                         logger.debug("Update in " + srcFolder.getName());
                     }
                 }
                 case "addHeader" -> {
-                    final String[] existingHeaders = msg.getHeader(X_IMAP_RSPAMD);
-                    final String newHeader = result.getHeaderText();
-                    if (existingHeaders == null || !equalScore(existingHeaders[0], newHeader)) {
+                    final String[] existingScore = msg.getHeader(X_IMAP_RSPAMD_SCORE);
+                    final double newScore = result.getScore();
+                    if (existingScore == null || !equalScore(existingScore[0], newScore)) {
                         if (copyOfMessage == null) {
                             copyOfMessage = new MimeMessage((MimeMessage) msg);
                             copyFlags(msg, copyOfMessage);
                             copyOfMessage.setFlags(imapRSpamdFlag, true);
                         }
-                        copyOfMessage.removeHeader(X_IMAP_RSPAMD);
-                        copyOfMessage.addHeader(X_IMAP_RSPAMD, newHeader);
-                        logger.debug("Add " + X_IMAP_RSPAMD + " header");
+                        copyOfMessage.removeHeader(X_IMAP_RSPAMD_SPAM);
+                        copyOfMessage.addHeader(X_IMAP_RSPAMD_SPAM, Boolean.toString(result.isSpam()));
+
+                        copyOfMessage.removeHeader(X_IMAP_RSPAMD_SCORE);
+                        copyOfMessage.addHeader(X_IMAP_RSPAMD_SCORE, Double.toString(result.getScore()));
+
+                        copyOfMessage.removeHeader(X_IMAP_RSPAMD_SYMBOLS);
+                        copyOfMessage.addHeader(X_IMAP_RSPAMD_SYMBOLS, result.getSymbolText());
+
+                        logger.debug("Added X_IMAP_RSPAMD headers");
                     }
                 }
                 case "rewriteSubject" -> {
@@ -141,10 +154,8 @@ public class CheckInboxCmd extends BaseFolderCommand {
         }
     }
 
-    private boolean equalScore(final @NotNull String a, final String b) {
-        final String[] as = a.split("\n|\r|\r\n");
-        final String[] bs = b.split("\n|\n|\r\n");
-        return as[0].equals(bs[0]);
+    private boolean equalScore(final @NotNull String oldScore, final double newScore) {
+        return Double.parseDouble(oldScore) == newScore;
     }
 
     private boolean equalsNoWhiteSpace(final String a, final String b) {

@@ -105,16 +105,13 @@ public class ExecResult {
         return null;
     }
 
-    public String getHeaderText() {
+    public String getSymbolText() {
         final StringBuilder sb = new StringBuilder(256);
-        sb.append("Spam: ").append(isSpam()).append(", ");
-        sb.append("Score: ").append(getScore()).append("\r\n\t ");
 
         final StringBuilder symbolsSB = new StringBuilder(256);
         for (final Symbol symbol : getSymbols()) {
             symbolsSB.append(symbol.toString()).append(", ");
             if (symbolsSB.length() >= 100) {
-                sb.setLength(sb.length() - 1);
                 sb.append(symbolsSB).append("\r\n\t ");
                 symbolsSB.setLength(0);
             }
