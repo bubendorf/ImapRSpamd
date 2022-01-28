@@ -3,6 +3,7 @@ package ch.bubendorf.spam.cmd;
 import ch.bubendorf.spam.CommandLineArguments;
 import ch.bubendorf.spam.ExecResult;
 import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import jakarta.mail.Flags;
 import jakarta.mail.Folder;
@@ -42,7 +43,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
     }
 
     @Override
-    protected ExecResult apply(final Message msg, final String messageText) throws IOException, InterruptedException, MessagingException {
+    protected ExecResult apply(final IMAPMessage msg, final String messageText) throws IOException, InterruptedException, MessagingException {
         final ExecResult result = execRSpamd("", messageText);
 
         final double score = result.getScore();
@@ -59,22 +60,22 @@ public class CheckInboxCmd extends BaseFolderCommand {
         return result;
     }
 
-    private void processAsSpam(final Message msg, final ExecResult result) throws MessagingException {
+    private void processAsSpam(final IMAPMessage msg, final ExecResult result) throws MessagingException {
         logger.info("SPAM [" + result.getScore() + "]");
         genericProcess(cmdArgs.getSpamActions(), msg, getSpamFolder(), result);
     }
 
-    private void processAsTomato(final Message msg, final ExecResult result) throws MessagingException {
+    private void processAsTomato(final IMAPMessage msg, final ExecResult result) throws MessagingException {
         logger.info("TOMATO [" + result.getScore() + "]");
         genericProcess(cmdArgs.getTomatoActions(), msg, getTomatoFolder(), result);
     }
 
-    private void processAsHam(final Message msg, final ExecResult result) throws MessagingException {
+    private void processAsHam(final IMAPMessage msg, final ExecResult result) throws MessagingException {
         logger.info("HAM [" + result.getScore() + "]");
         genericProcess(cmdArgs.getHamActions(), msg, getHamFolder(), result);
     }
 
-    private void genericProcess(final List<String> actions, final Message msg, final IMAPFolder destFolder,
+    private void genericProcess(final List<String> actions, final IMAPMessage msg, final IMAPFolder destFolder,
                                 final ExecResult result) throws MessagingException {
 
         MimeMessage copyOfMessage = null;
@@ -90,7 +91,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         openFolder(destFolder);
                         destFolder.addMessages(new Message[]{copyOfMessage});
                     }
-                    logger.debug("Copy to " + destFolder.getName());
+                    logger.info("Copy to " + destFolder.getName());
                 }
                 case "move" -> {
                     moveTo(copyOfMessage, msg, destFolder);
@@ -105,7 +106,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
                         msg.setFlag(Flags.Flag.DELETED, true);
 
-                        logger.debug("Update in " + srcFolder.getName());
+                        logger.info("Update in " + srcFolder.getName());
                     }
                 }
                 case "addHeader" -> {
@@ -113,7 +114,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     final double newScore = result.getScore() - 1;
                     if (existingScore == null || !equalScore(existingScore[0], newScore)) {
                         if (copyOfMessage == null) {
-                            copyOfMessage = new MimeMessage((MimeMessage) msg);
+                            copyOfMessage = new MimeMessage(msg);
                             copyFlags(msg, copyOfMessage);
                             copyOfMessage.setFlags(imapRSpamdFlag, true);
                         }
@@ -126,22 +127,22 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         copyOfMessage.removeHeader(X_IMAP_RSPAMD_SYMBOLS);
                         copyOfMessage.addHeader(X_IMAP_RSPAMD_SYMBOLS, result.getSymbolText());
 
-                        logger.debug("Added X_IMAP_RSPAMD headers");
+                        logger.info("Added X_IMAP_RSPAMD headers");
                     }
                 }
                 case "rewriteSubject" -> {
                     if (copyOfMessage == null) {
-                        copyOfMessage = new MimeMessage((MimeMessage) msg);
+                        copyOfMessage = new MimeMessage(msg);
                         copyFlags(msg, copyOfMessage);
                         copyOfMessage.setFlags(imapRSpamdFlag, true);
                     }
                     final String newSubject = getNewSubject(msg, result);
                     copyOfMessage.setSubject(newSubject);
-                    logger.debug("Rewrite subject to " + newSubject);
+                    logger.info("Rewrite subject to " + newSubject);
                 }
                 case "delete" -> {
                     msg.setFlag(Flags.Flag.DELETED, true);
-                    logger.debug("Delete message");
+                    logger.info("Delete message");
                 }
                 case "trash" -> {
                     moveTo(copyOfMessage, msg, getTrashFolder());
@@ -170,7 +171,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
         return a2.equals(b2);
     }*/
 
-    private void copyFlags(final Message srcMessage, final MimeMessage destMessage) throws MessagingException {
+    private void copyFlags(final IMAPMessage srcMessage, final MimeMessage destMessage) throws MessagingException {
         final Flags srcFlags = srcMessage.getFlags();
         restoreFlags(destMessage, srcFlags);
         logger.debug("SrcFlags: " + srcFlags + ", DestFlag: " + destMessage.getFlags());
@@ -192,10 +193,10 @@ public class CheckInboxCmd extends BaseFolderCommand {
             destFolder.addMessages(new Message[]{copyOfMessage});
             msg.setFlag(Flags.Flag.DELETED, true);
         }
-        logger.debug("Move to " + destFolder.getName());
+        logger.info("Move to " + destFolder.getName());
     }
 
-    private String getNewSubject(final Message msg, final ExecResult result) throws MessagingException {
+    private String getNewSubject(final IMAPMessage msg, final ExecResult result) throws MessagingException {
         String subject = cmdArgs.getNewSubject();
         subject = subject.replace("%s", msg.getSubject());
         subject = subject.replace("%c", Double.toString(result.getScore()));

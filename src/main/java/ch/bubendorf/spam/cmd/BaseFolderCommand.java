@@ -3,13 +3,16 @@ package ch.bubendorf.spam.cmd;
 import ch.bubendorf.spam.CommandLineArguments;
 import ch.bubendorf.spam.ExecResult;
 import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import jakarta.mail.*;
+import jakarta.mail.internet.MimeMessage;
 import org.apache.commons.lang3.ArrayUtils;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Enumeration;
 
 import static jakarta.mail.Flags.Flag.*;
@@ -26,10 +29,13 @@ public abstract class BaseFolderCommand extends BaseCommand {
     public void run() throws MessagingException, IOException, InterruptedException {
         srcFolder = (IMAPFolder)store.getFolder(getFolderName());
         srcFolder.open(Folder.READ_WRITE);
-        final Message[] messages = srcFolder.getMessages();
+        final Message[] genericMessages = srcFolder.getMessages();
+        final IMAPMessage[] messages = Arrays.copyOf(genericMessages, genericMessages.length, IMAPMessage[].class);
         int count = 0;
         int skipped = 0;
-        for (final Message msg : messages) {
+        for (final IMAPMessage msg : messages) {
+            msg.setPeek(true);
+//            logger.debug("Flags : " + msg.getFlags());
             if (cmdArgs.isForce() || (isEligible(msg) && isReceivedAfter(msg) && isReceivedBefore(msg))) {
                 if (cmdArgs.getSkipMessages() > skipped) {
                     logger.debug("Skipped " + getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
@@ -40,7 +46,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 if (count > cmdArgs.getMaxMessages()) {
                     break;
                 }
-                logger.debug(getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
+                logger.info(getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
                 apply(msg, sb.toString());
             } else {
@@ -51,7 +57,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
         srcFolder.close(true);
     }
 
-    @NonNull
+    @NotNull
     protected String getFrom(final Message msg) throws MessagingException {
         final Address[] from = msg.getFrom();
         if (from == null || from.length == 0) {
@@ -69,14 +75,14 @@ public abstract class BaseFolderCommand extends BaseCommand {
     }
 
     protected abstract String getFolderName();
-    protected abstract ExecResult apply(final Message msg, final String messageText) throws IOException, InterruptedException, MessagingException;
+    protected abstract ExecResult apply(final IMAPMessage msg, final String messageText) throws IOException, InterruptedException, MessagingException;
 
-    protected String getMessageId(final Message msg) throws MessagingException {
+    protected String getMessageId(final IMAPMessage msg) throws MessagingException {
         final String[] headers = msg.getHeader("Message-ID");
         return ArrayUtils.isNotEmpty(headers) ? headers[0] : null;
     }
 
-    private StringBuilder getMailText(final Message msg) throws MessagingException, IOException {
+    private StringBuilder getMailText(final IMAPMessage msg) throws MessagingException, IOException {
         final StringBuilder sb = new StringBuilder(1024);
         final Enumeration<Header> headers = msg.getAllHeaders();
         while (headers.hasMoreElements()) {
@@ -87,9 +93,9 @@ public abstract class BaseFolderCommand extends BaseCommand {
 
         // Readig the mail text will at least set the \SEEN flag
         // ==> Read the flags and restore them afterwards
-        final Flags flags = msg.getFlags();
+//        final Flags flags = msg.getFlags();
         final String body = new String(msg.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        restoreFlags(msg, flags);
+//        restoreFlags(msg, flags);
 
         sb.append(body);
         sb.append("\n");
@@ -99,7 +105,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
 
     private static final Flags.Flag[] systemFlags = new Flags.Flag[]{FLAGGED, ANSWERED, DELETED, SEEN, DRAFT, USER};
 
-    protected void restoreFlags(final Message msg, final Flags flags) throws MessagingException {
+    protected void restoreFlags(final MimeMessage msg, final Flags flags) throws MessagingException {
         // Restore system flags
         for (final Flags.Flag flag : systemFlags) {
             final boolean isSet = flags.contains(flag);

@@ -1,8 +1,7 @@
 package ch.bubendorf.spam;
 
-
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,12 +38,12 @@ public class Symbol {
     }
 
     @Override
-    @NonNull
+    @NotNull
     public String toString() {
         return name + (Double.isNaN(score) ? "" : " (" + score + ")") + (desc == null ? "" : "[" + desc + "]");
     }
 
-    @NonNull
+    @NotNull
     public String getShortForm() {
         return name + (Double.isNaN(score) ? "" : " (" + score + ")");
     }
@@ -55,7 +54,7 @@ public class Symbol {
         return name + (Double.isNaN(score) ? "" : " (" + score + ")") + (formattedDesc == null ? "" : "[" + formattedDesc + "]");
     }*/
 
-    @NonNull
+    @NotNull
     public String getName() {
         return name;
     }

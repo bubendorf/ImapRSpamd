@@ -106,10 +106,10 @@ public class CommandLineArguments {
     private List<String> spamActions = new ArrayList<>();
 
     @Parameter(names = "--tomatoScore", description = "Tomato score")
-    private double tomatoScore = 6.0;
+    private double tomatoScore = 8.0;
 
     @Parameter(names = "--spamScore", description = "Spam score")
-    private double spamScore = 15.0;
+    private double spamScore = 18.0;
 
     @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score")
     private String newSubject = "[SPAM %c] %s";

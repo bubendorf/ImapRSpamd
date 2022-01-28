@@ -160,12 +160,12 @@ public class Main {
     }
 
     private void learnSpam(final IMAPStore store) throws MessagingException, IOException, InterruptedException {
-      final LearnSpamCmd learnSpamCmd = new LearnSpamCmd(cmdArgs, store);
+        final LearnSpamCmd learnSpamCmd = new LearnSpamCmd(cmdArgs, store);
         learnSpamCmd.run();
     }
 
-  private void checkInbox (final IMAPStore store) throws MessagingException, IOException, InterruptedException {
-      final CheckInboxCmd checkInboxCmd = new CheckInboxCmd(cmdArgs, store);
+    private void checkInbox(final IMAPStore store) throws MessagingException, IOException, InterruptedException {
+        final CheckInboxCmd checkInboxCmd = new CheckInboxCmd(cmdArgs, store);
         checkInboxCmd.run();
     }
 
@@ -196,8 +196,8 @@ public class Main {
                         logger.debug("Message Count Changed: Removed " + ev.getMessages().length + " messages");
                     } else {
                         logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages");
+                        keepOnIdeling = false;
                     }
-                    keepOnIdeling = false;
                     synchronized (idleLock) {
                         idleLock.notifyAll();
                     }
@@ -207,13 +207,13 @@ public class Main {
         }
 
         while (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
-            logger.debug("Watch IDLE folder");
+//            logger.debug("Watch IDLE folder");
             idleManager.watch(idleFolder);
             try {
                 synchronized (idleLock) {
-                    logger.debug("Before lock()");
+//                    logger.debug("Before lock()");
                     idleLock.wait(cmdArgs.getIdleTimeout() * 1000L); // Do something after some time
-                    logger.debug("After lock()");
+//                    logger.debug("After lock()");
                 }
             } catch (final InterruptedException e) {
                 e.printStackTrace();
@@ -234,12 +234,13 @@ public class Main {
     }
 
     private IMAPFolder getIdleFolder(final IMAPStore store) throws MessagingException {
-          if (idleFolder == null) {
-            idleFolder = (IMAPFolder)store.getFolder(cmdArgs.getIdleFolder());
+        if (idleFolder == null) {
+            idleFolder = (IMAPFolder) store.getFolder(cmdArgs.getIdleFolder());
             idleFolder.open(Folder.READ_WRITE);
         }
         return idleFolder;
     }
+
     private void unknownCommand(final String cmd) {
         logger.error("Unknown command " + cmd);
         System.exit(2);

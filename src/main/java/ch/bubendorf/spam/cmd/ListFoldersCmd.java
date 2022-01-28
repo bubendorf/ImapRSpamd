@@ -5,8 +5,6 @@ import com.sun.mail.imap.IMAPStore;
 import jakarta.mail.Folder;
 import jakarta.mail.MessagingException;
 
-import java.io.IOException;
-
 public class ListFoldersCmd extends BaseCommand {
 
     protected final IMAPStore store;

@@ -2,8 +2,8 @@ package ch.bubendorf.spam.cmd;
 
 import ch.bubendorf.spam.CommandLineArguments;
 import ch.bubendorf.spam.ExecResult;
+import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
-import jakarta.mail.Message;
 
 import java.io.IOException;
 
@@ -19,7 +19,7 @@ public class LearnSpamCmd extends BaseFolderCommand {
     }
 
     @Override
-    protected ExecResult apply(final Message msg, final String messageText) throws IOException, InterruptedException {
+    protected ExecResult apply(final IMAPMessage msg, final String messageText) throws IOException, InterruptedException {
         final ExecResult result = execRSpamd("learn_spam --pass-all", messageText);
         logger.info("Success = " + result.isSuccess() + ", ScanTime = " + result.getScanTime());
         if (!result.isSuccess()) {
