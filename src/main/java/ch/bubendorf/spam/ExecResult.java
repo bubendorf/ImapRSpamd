@@ -31,7 +31,7 @@ public class ExecResult {
     private final Pattern ACTION_PATTERN = Pattern.compile("^Action: ([\\p{Alnum}]+)$", Pattern.MULTILINE);
     private final Pattern SPAM_PATTERN = Pattern.compile("^Spam: ([\\p{Alnum}]+)$", Pattern.MULTILINE);
     private final Pattern SUCCESS_PATTERN = Pattern.compile("^success = ([\\p{Alnum}]+);$", Pattern.MULTILINE);
-    private final Pattern SCORE_PATTERN = Pattern.compile("^Score: ([0-9.]+) / ([0-9.]+)$", Pattern.MULTILINE);
+    private final Pattern SCORE_PATTERN = Pattern.compile("^Score: ([0-9.-]+) / ([0-9.-]+)$", Pattern.MULTILINE);
     private final Pattern SCAN_TIME_PATTERN = Pattern.compile("^scan_time = ([0-9.]+);$", Pattern.MULTILINE);
     private final Pattern SYMBOL_PATTERN = Pattern.compile("^Symbol: (.+)$", Pattern.MULTILINE);
     private final Pattern ERROR_PATTERN = Pattern.compile("^error = \"(.+)\";$", Pattern.MULTILINE);
@@ -112,7 +112,7 @@ public class ExecResult {
         for (final Symbol symbol : getSymbols()) {
             symbolsSB.append(symbol.toString()).append(", ");
             if (symbolsSB.length() >= 100) {
-                sb.append(symbolsSB).append("\r\n\t ");
+                sb.append(symbolsSB).append("\r\n\t");
                 symbolsSB.setLength(0);
             }
         }

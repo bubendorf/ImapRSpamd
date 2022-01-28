@@ -24,16 +24,16 @@ public class CommandLineArguments {
      * learnSpam: Learn the mails from the SPAM folder as spam
      * checkInbox: Run rspamc on the mails in the INBOX folder
      */
-    @Parameter(names = {"-cmd", "--command"})
+    @Parameter(names = {"-cmd", "--command"}, description = "listFolders, learnSpam, learnHam, checkInbox, stat, idle")
     private List<String> cmds = new ArrayList<>();
 
-    @Parameter(names = {"-h", "--help"}, help = true)
+    @Parameter(names = {"-h", "--help"}, help = true, description = "Show this help")
     private boolean isHelp = false;
 
     @Parameter(names = { "-v", "--verbose" }, description = "Be verbose")
     private boolean verbose = false;
 
-    @Parameter(names = { "-f", "--force" }, description = "")
+    @Parameter(names = { "-f", "--force" }, description = "Process even already processed mails")
     private boolean force = false;
 
     @Parameter(names = {"-H", "--host"}, description = "Host name", arity = 1)
@@ -48,20 +48,23 @@ public class CommandLineArguments {
     @Parameter(names = {"--starttls"}, description = "Use STARTTLS", arity = 1)
     private boolean starttls = false;
 
-    @Parameter(names = {"--ssltrust"}, description = "Trust TSL certificate errors", arity = 1)
+    @Parameter(names = {"--ssltrust"}, description = "Trust all SSL/TSL certificates", arity = 1)
     private String ssltrust = null;
 
-    @Parameter(names = {"-u", "--user"}, description = "User name", arity = 1)
+    @Parameter(names = {"-u", "--user"}, description = "User name to login to the server", arity = 1)
     private String user = null;
 
-    @Parameter(names = {"-pw", "--password"}, description = "Password", arity = 1)
+    @Parameter(names = {"-pw", "--password"}, description = "Password to login to the server", arity = 1)
     private String password = null;
 
     @Parameter(names = {"-i", "--inbox", "--inboxFolder"}, description = "Name of the INBOX folder", arity = 1)
     private String inboxFolder = "INBOX";
 
-    @Parameter(names = {"--idleFolder"}, description = "Name of the IDLE folder", arity = 1)
+    @Parameter(names = {"--idleFolder"}, description = "Name of the IDLE folder. Default: The same as --inboxFolder", arity = 1)
     private String idleFolder = null;
+
+    @Parameter(names = {"--idleTimeout"}, description = "IDLE timeout in seconds. Default: 1790", arity = 1)
+    private int idleTimeout = 1790;
 
     @Parameter(names = {"--tomatoFolder"}, description = "Name of the TOMATO folder", arity = 1)
     private String tomatoFolder = "Junk";
@@ -108,7 +111,7 @@ public class CommandLineArguments {
     @Parameter(names = "--spamScore", description = "Spam score")
     private double spamScore = 15.0;
 
-    @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original Subject, %c=Score")
+    @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score")
     private String newSubject = "[SPAM %c] %s";
 
     public void setDefaults() {
@@ -247,10 +250,6 @@ public class CommandLineArguments {
         return tomatoFolder;
     }
 
-    public Date getReceivedDateAfterDate() {
-        return receivedDateAfterDate;
-    }
-
     public List<String> getHamActions() {
         return hamActions;
     }
@@ -277,6 +276,10 @@ public class CommandLineArguments {
 
     public String getIdleFolder() {
         return idleFolder;
+    }
+
+    public int getIdleTimeout() {
+        return idleTimeout;
     }
 
     public String getTrashFolder() {

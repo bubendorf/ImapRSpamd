@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 
+import static jakarta.mail.Flags.Flag.*;
+
 public abstract class BaseFolderCommand extends BaseCommand {
     protected final IMAPStore store;
     protected IMAPFolder srcFolder;
@@ -83,10 +85,31 @@ public abstract class BaseFolderCommand extends BaseCommand {
         }
         sb.append("\n");
 
+        // Readig the mail text will at least set the \SEEN flag
+        // ==> Read the flags and restore them afterwards
+        final Flags flags = msg.getFlags();
         final String body = new String(msg.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        restoreFlags(msg, flags);
+
         sb.append(body);
         sb.append("\n");
+
         return sb;
+    }
+
+    private static final Flags.Flag[] systemFlags = new Flags.Flag[]{FLAGGED, ANSWERED, DELETED, SEEN, DRAFT, USER};
+
+    protected void restoreFlags(final Message msg, final Flags flags) throws MessagingException {
+        // Restore system flags
+        for (final Flags.Flag flag : systemFlags) {
+            final boolean isSet = flags.contains(flag);
+            msg.setFlag(flag, isSet);
+        }
+
+        // Restore user flags
+        for (final String flag : flags.getUserFlags()) {
+            msg.setFlags(new Flags(flag), true);
+        }
     }
 
 }

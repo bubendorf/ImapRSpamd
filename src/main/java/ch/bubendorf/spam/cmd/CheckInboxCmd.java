@@ -11,7 +11,6 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.jetbrains.annotations.NotNull;
 
-
 import java.io.IOException;
 import java.util.List;
 
@@ -81,10 +80,10 @@ public class CheckInboxCmd extends BaseFolderCommand {
         MimeMessage copyOfMessage = null;
 
         for (final String action : actions) {
-            switch(action) {
+            switch (action) {
                 case "copy" -> {
                     if (copyOfMessage == null) {
-                        // Directly copy the message on the server
+                        // Original message has not been changed ==> directly copy the message on the server
                         srcFolder.copyMessages(new Message[]{msg}, destFolder);
                     } else {
                         // Add the copy of the message to the destination folder
@@ -105,13 +104,13 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         srcFolder.addMessages(new Message[]{copyOfMessage});
 
                         msg.setFlag(Flags.Flag.DELETED, true);
-                        
+
                         logger.debug("Update in " + srcFolder.getName());
                     }
                 }
                 case "addHeader" -> {
                     final String[] existingScore = msg.getHeader(X_IMAP_RSPAMD_SCORE);
-                    final double newScore = result.getScore();
+                    final double newScore = result.getScore() - 1;
                     if (existingScore == null || !equalScore(existingScore[0], newScore)) {
                         if (copyOfMessage == null) {
                             copyOfMessage = new MimeMessage((MimeMessage) msg);
@@ -158,7 +157,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
         return Double.parseDouble(oldScore) == newScore;
     }
 
-    private boolean equalsNoWhiteSpace(final String a, final String b) {
+    /*private boolean equalsNoWhiteSpace(final String a, final String b) {
         //noinspection StringEquality
         if (a == b) {
             return true;
@@ -169,22 +168,12 @@ public class CheckInboxCmd extends BaseFolderCommand {
         final String a2 = a.replaceAll("\\s","");
         final String b2 = b.replaceAll("\\s","");
         return a2.equals(b2);
-    }
+    }*/
 
     private void copyFlags(final Message srcMessage, final MimeMessage destMessage) throws MessagingException {
         final Flags srcFlags = srcMessage.getFlags();
-        destMessage.setFlags(srcFlags, true);
-//        destMessage.setFlag(Flags.Flag.SEEN, false);
-        logger.debug("SrcFlags: " + srcFlags.toString() + ", DestFlag: " + destMessage.getFlags().toString());
-
-  /*      for (final Flags.Flag flag : srcFlags.getSystemFlags()) {
-            logger.debug(flag.toString() + " : " + srcMessage.isSet(flag));
-            destMessage.setFlag(flag, srcMessage.isSet(flag));
-        }*/
-/*        for (final String userFlag : srcMessage.getFlags().getUserFlags()){
-            final Flags flags = new Flags(userFlag);
-            destMessage.setFlags(flags, srcMessage.isSet(flags.g));
-        }*/
+        restoreFlags(destMessage, srcFlags);
+        logger.debug("SrcFlags: " + srcFlags + ", DestFlag: " + destMessage.getFlags());
     }
 
     private void openFolder(final Folder folder) throws MessagingException {
@@ -195,7 +184,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     private void moveTo(final MimeMessage copyOfMessage, final Message msg, final IMAPFolder destFolder) throws MessagingException {
         if (copyOfMessage == null) {
-            // Directly move the message on the server to the destination folder
+            // Original message has not been changed ==> directly move the message on the server to the destination folder
             srcFolder.moveMessages(new Message[]{msg}, destFolder);
         } else {
             // Add the copy of the message to the destination folder and delete the original
@@ -208,8 +197,8 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     private String getNewSubject(final Message msg, final ExecResult result) throws MessagingException {
         String subject = cmdArgs.getNewSubject();
-        subject = subject.replace("%s",msg.getSubject());
-        subject = subject.replace("%c",Double.toString(result.getScore()));
+        subject = subject.replace("%s", msg.getSubject());
+        subject = subject.replace("%c", Double.toString(result.getScore()));
         return subject;
     }
 
@@ -237,7 +226,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     private IMAPFolder getHamFolder() throws MessagingException {
         if (hamFolder == null) {
-            hamFolder = (IMAPFolder)store.getFolder(cmdArgs.getHamFolder());
+            hamFolder = (IMAPFolder) store.getFolder(cmdArgs.getHamFolder());
         }
 //            hamFolder.open(Folder.READ_WRITE);
         return hamFolder;
@@ -245,7 +234,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     private IMAPFolder getSpamFolder() throws MessagingException {
         if (spamFolder == null) {
-            spamFolder = (IMAPFolder)store.getFolder(cmdArgs.getSpamFolder());
+            spamFolder = (IMAPFolder) store.getFolder(cmdArgs.getSpamFolder());
         }
 //            spamFolder.open(Folder.READ_WRITE);
         return spamFolder;
@@ -253,7 +242,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     private IMAPFolder getTomatoFolder() throws MessagingException {
         if (tomatoFolder == null) {
-            tomatoFolder = (IMAPFolder)store.getFolder(cmdArgs.getTomatoFolder());
+            tomatoFolder = (IMAPFolder) store.getFolder(cmdArgs.getTomatoFolder());
         }
 //            tomatoFolder.open(Folder.READ_WRITE);
         return tomatoFolder;
@@ -261,7 +250,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     private IMAPFolder getTrashFolder() throws MessagingException {
         if (trashFolder == null) {
-            trashFolder = (IMAPFolder)store.getFolder(cmdArgs.getTomatoFolder());
+            trashFolder = (IMAPFolder) store.getFolder(cmdArgs.getTomatoFolder());
         }
 //            trashFolder.open(Folder.READ_WRITE);
         return trashFolder;

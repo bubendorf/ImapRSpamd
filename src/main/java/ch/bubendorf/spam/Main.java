@@ -1,9 +1,6 @@
 package ch.bubendorf.spam;
 
-import ch.bubendorf.spam.cmd.LearnHamCmd;
-import ch.bubendorf.spam.cmd.LearnSpamCmd;
-import ch.bubendorf.spam.cmd.CheckInboxCmd;
-import ch.bubendorf.spam.cmd.StatCmd;
+import ch.bubendorf.spam.cmd.*;
 import com.beust.jcommander.JCommander;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
@@ -38,6 +35,8 @@ public class Main {
     private final Object idleLock = new Object();
     private boolean keepOnIdeling;
     private IMAPFolder idleFolder;
+
+    private int termSignalCount = 0;
 
     public static void main(final String[] args) throws MessagingException, IOException, InterruptedException {
         logger.info("ImapRSpamd Version " + BuildVersion.getBuildVersion());
@@ -94,6 +93,7 @@ public class Main {
             props.setProperty("mail.imaps.ssl.trust", cmdArgs.getSsltrust());
         }
 
+        // Necessary for the IDLE stuff
         props.setProperty("mail.imap.usesocketchannels", "true");
         props.setProperty("mail.imaps.usesocketchannels", "true");
 
@@ -113,12 +113,17 @@ public class Main {
     private void installSignalHandlers() {
         Signal.handle(new Signal("TERM"), sig -> {
             logger.info("Received TERM signal!");
+            termSignalCount++;
             stayInMainLoop = false;
             synchronized (idleLock) {
                 idleLock.notifyAll();
             }
             shutdownIdleManager();
             shutdownExecService();
+            if (termSignalCount > 1) {
+                // Force the program to terminate
+                System.exit(0);
+            }
         });
     }
 
@@ -175,6 +180,7 @@ public class Main {
     }
 
     private void idle(final Session session, final IMAPStore store) throws IOException, MessagingException {
+        logger.debug("Begin IDLE");
         stayInMainLoop = true;
         keepOnIdeling = true;
 
@@ -186,7 +192,11 @@ public class Main {
             idleManager = new IdleManager(session, execService);
             final MessageCountAdapter messageCountAdapter = new MessageCountAdapter() {
                 public void messagesAdded(final MessageCountEvent ev) {
-                    logger.debug("Message Count Changed");
+                    if (ev.isRemoved()) {
+                        logger.debug("Message Count Changed: Removed " + ev.getMessages().length + " messages");
+                    } else {
+                        logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages");
+                    }
                     keepOnIdeling = false;
                     synchronized (idleLock) {
                         idleLock.notifyAll();
@@ -196,23 +206,23 @@ public class Main {
             idleFolder.addMessageCountListener(messageCountAdapter);
         }
 
-        while (idleManager.isRunning() && keepOnIdeling) {
+        while (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
             logger.debug("Watch IDLE folder");
             idleManager.watch(idleFolder);
             try {
                 synchronized (idleLock) {
                     logger.debug("Before lock()");
-                    idleLock.wait(9 * 60 * 1000L); // Do something after 9 minutes
+                    idleLock.wait(cmdArgs.getIdleTimeout() * 1000L); // Do something after some time
                     logger.debug("After lock()");
                 }
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 e.printStackTrace();
             }
 
-            if (idleManager.isRunning() && keepOnIdeling) {
+            if (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
                 // Keep the connection alive by sending an IMAP noop
+                logger.debug("Sending NoOp");
                 final IMAPFolder.ProtocolCommand noop = protocol -> {
-                    logger.debug("Sending NoOp");
                     protocol.simpleCommand("NOOP", null);
                     return null;
                 };
@@ -221,15 +231,10 @@ public class Main {
         }
 
         logger.debug("Finish ideling");
-
-/*        idleFolder.removeMessageCountListener(messageCountAdapter);
-        idleManager.stop();
-        idleManager = null;*/
     }
 
     private IMAPFolder getIdleFolder(final IMAPStore store) throws MessagingException {
-        // TODO: Reuse the INBOX folder if it is the same
-        if (idleFolder == null) {
+          if (idleFolder == null) {
             idleFolder = (IMAPFolder)store.getFolder(cmdArgs.getIdleFolder());
             idleFolder.open(Folder.READ_WRITE);
         }
@@ -241,10 +246,7 @@ public class Main {
     }
 
     private void listFolders(final IMAPStore store) throws MessagingException {
-        final Folder defaultFolder = store.getDefaultFolder();
-        final Folder[] folders = defaultFolder.list("*");
-        for (final Folder folder : folders) {
-            logger.info(folder.getFullName());
-        }
+        final ListFoldersCmd cmd = new ListFoldersCmd(cmdArgs, store);
+        cmd.run();
     }
 }
