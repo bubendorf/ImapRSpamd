@@ -1,0 +1,20 @@
+[Unit]
+Description=IMAP to Rspamd
+After=rspamd.service
+
+[Service]
+Type=simple
+PIDFile=/run/ImapRSpand.pid
+User=mbu
+Group=mbu
+WorkingDirectory=/opt/ImapRSpamd
+Environment="LANG=en_US.utf8"
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ImapRSpamd
+ExecStart=java -Dorg.slf4j.simpleLogger.showDateTime=false -jar ImapRSpamd-1.0-all.jar --command checkInbox,idle
+ExecStop =/bin/kill -s TERM $MAINPID
+
+[Install]
+WantedBy=multi-user.target

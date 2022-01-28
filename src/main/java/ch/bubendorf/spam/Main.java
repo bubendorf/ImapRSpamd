@@ -96,6 +96,8 @@ public class Main {
         // Necessary for the IDLE stuff
         props.setProperty("mail.imap.usesocketchannels", "true");
         props.setProperty("mail.imaps.usesocketchannels", "true");
+        props.setProperty("mail.imap.fetchsize", "1048576");
+        props.setProperty("mail.imaps.fetchsize", "1048576");
 
         installSignalHandlers();
 

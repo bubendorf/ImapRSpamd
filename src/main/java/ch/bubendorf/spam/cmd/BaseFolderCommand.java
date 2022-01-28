@@ -36,7 +36,10 @@ public abstract class BaseFolderCommand extends BaseCommand {
         for (final IMAPMessage msg : messages) {
             msg.setPeek(true);
 //            logger.debug("Flags : " + msg.getFlags());
-            if (cmdArgs.isForce() || (isEligible(msg) && isReceivedAfter(msg) && isReceivedBefore(msg))) {
+            if (cmdArgs.isForce() || (isEligible(msg) &&
+                    isReceivedAfter(msg) &&
+                    isReceivedBefore(msg) &&
+                    isSmallEnough(msg))) {
                 if (cmdArgs.getSkipMessages() > skipped) {
                     logger.debug("Skipped " + getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                     skipped++;

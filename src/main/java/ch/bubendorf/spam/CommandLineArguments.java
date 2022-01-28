@@ -88,6 +88,9 @@ public class CommandLineArguments {
     @Parameter(names = "--skipMessages", description = "Skip that many messages")
     private int skipMessages = 0;
 
+    @Parameter(names = "--maxSize", description = "Maximum message size. Default: 1'000'000 bytes.")
+    private int maxSize = 1048576; // 1 MB
+
     @Parameter(names = "--receivedDateAfter", description = "Skip messages received before the date/time")
     private String receivedDateAfter = null;
     private Date receivedDateAfterDate = null;
@@ -284,5 +287,9 @@ public class CommandLineArguments {
 
     public String getTrashFolder() {
         return trashFolder;
+    }
+
+    public int getMaxSize() {
+        return maxSize;
     }
 }

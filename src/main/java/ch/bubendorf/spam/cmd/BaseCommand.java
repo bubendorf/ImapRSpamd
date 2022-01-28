@@ -3,7 +3,7 @@ package ch.bubendorf.spam.cmd;
 import ch.bubendorf.spam.CommandLineArguments;
 import ch.bubendorf.spam.ExecResult;
 import ch.bubendorf.spam.StreamGobbler;
-import jakarta.mail.Message;
+import com.sun.mail.imap.IMAPMessage;
 import jakarta.mail.MessagingException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -57,7 +57,11 @@ public abstract class BaseCommand {
         return new ExecResult(exitCode, stdoutGobbler.getResult(), stderrGobbler.getResult());
     }
 
-    protected boolean isReceivedAfter(final Message msg) throws MessagingException {
+    protected boolean isSmallEnough(final IMAPMessage msg) throws MessagingException {
+        return msg.getSize() <= cmdArgs.getMaxSize();
+    }
+
+    protected boolean isReceivedAfter(final IMAPMessage msg) throws MessagingException {
         if (cmdArgs.getReceivedDateAfter() == null) {
             // No receivedAfter date specified ==> Process it
             return true;
@@ -66,7 +70,7 @@ public abstract class BaseCommand {
         return receivedDate == null || !receivedDate.before(cmdArgs.getReceivedDateAfter());
     }
 
-    protected boolean isReceivedBefore(final Message msg) throws MessagingException {
+    protected boolean isReceivedBefore(final IMAPMessage msg) throws MessagingException {
         if (cmdArgs.getReceivedDateBefore() == null) {
             // No receivedBefore date specified ==> Process it
             return true;
