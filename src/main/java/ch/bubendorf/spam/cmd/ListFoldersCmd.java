@@ -21,4 +21,10 @@ public class ListFoldersCmd extends BaseCommand {
             logger.info(folder.getFullName());
         }
     }
+
+    @Override
+    public String getName() {
+        return "ListFolders";
+    }
+
 }

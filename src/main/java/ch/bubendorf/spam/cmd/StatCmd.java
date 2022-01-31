@@ -16,4 +16,10 @@ public class StatCmd extends BaseCommand {
         logger.info(result.getStdout());
 
     }
+
+    @Override
+    public String getName() {
+        return "Stat";
+    }
+
 }

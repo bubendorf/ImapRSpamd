@@ -26,6 +26,8 @@ public abstract class BaseCommand {
         this.cmdArgs = cmdArgs;
     }
 
+    public abstract String getName();
+
     protected ExecResult execRSpamd(final String parameters, final String stdinText) throws IOException, InterruptedException {
         final ProcessBuilder builder = new ProcessBuilder();
         final String cmdLine = cmdArgs.getRspamc() + " " + parameters;

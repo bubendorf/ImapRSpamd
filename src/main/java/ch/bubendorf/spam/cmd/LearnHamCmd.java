@@ -27,4 +27,9 @@ public class LearnHamCmd extends BaseFolderCommand {
         }
         return result;
     }
+
+    @Override
+    public String getName() {
+        return "LearnHam";
+    }
 }

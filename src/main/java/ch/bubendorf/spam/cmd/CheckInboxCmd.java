@@ -46,13 +46,20 @@ public class CheckInboxCmd extends BaseFolderCommand {
     protected ExecResult apply(final IMAPMessage msg, final String messageText) throws IOException, InterruptedException, MessagingException {
         final ExecResult result = execRSpamd("", messageText);
 
-        final double score = result.getScore();
-        if (score >= cmdArgs.getSpamScore()) {
-            processAsSpam(msg, result);
-        } else if (score >= cmdArgs.getTomatoScore()) {
-            processAsTomato(msg, result);
+        if (result.getExitCode() == 0) {
+            final double score = result.getScore();
+            if (score >= cmdArgs.getSpamScore()) {
+                processAsSpam(msg, result);
+            } else if (score >= cmdArgs.getTomatoScore()) {
+                processAsTomato(msg, result);
+            } else {
+                processAsHam(msg, result);
+            }
         } else {
-            processAsHam(msg, result);
+            // Hmmm. Something happened. I think it is best we don't do anything
+            logger.warn("Running rspamc failed. ExitCode=" + result.getExitCode() +
+                    ", stdout=" + result.getStdout() +
+                    ", stderr=" + result.getStderr());
         }
 
         msg.setFlags(imapRSpamdFlag, true);
@@ -255,5 +262,10 @@ public class CheckInboxCmd extends BaseFolderCommand {
         }
 //            trashFolder.open(Folder.READ_WRITE);
         return trashFolder;
+    }
+
+    @Override
+    public String getName() {
+        return "CheckInbox";
     }
 }

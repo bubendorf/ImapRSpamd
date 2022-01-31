@@ -122,8 +122,9 @@ public class Main {
             }
             shutdownIdleManager();
             shutdownExecService();
-            if (termSignalCount > 1) {
+            if (termSignalCount > 2) {
                 // Force the program to terminate
+                logger.info("Immediate exit");
                 System.exit(0);
             }
         });

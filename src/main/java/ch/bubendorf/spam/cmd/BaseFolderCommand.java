@@ -33,6 +33,11 @@ public abstract class BaseFolderCommand extends BaseCommand {
         final IMAPMessage[] messages = Arrays.copyOf(genericMessages, genericMessages.length, IMAPMessage[].class);
         int count = 0;
         int skipped = 0;
+        int success = 0;
+        int error = 0;
+        int ham = 0;
+        int tomato = 0;
+        int spam = 0;
         for (final IMAPMessage msg : messages) {
             msg.setPeek(true);
 //            logger.debug("Flags : " + msg.getFlags());
@@ -51,13 +56,32 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 }
                 logger.info(getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
-                apply(msg, sb.toString());
+                final ExecResult result = apply(msg, sb.toString());
+                if (result.isSuccess()) {
+                    success++;
+                } else {
+                    error++;
+                }
+                final double score = result.getScore();
+                if (!Double.isNaN(score)) {
+                    if (score >= cmdArgs.getSpamScore()) {
+                        spam++;
+                    } else if (score >= cmdArgs.getTomatoScore()) {
+                        tomato++;
+                    } else {
+                        ham++;
+                    }
+                }
             } else {
                 logger.debug("Skipped " + getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
             }
         }
         close();
         srcFolder.close(true);
+        logger.info(getName() + " : Skipped : " + skipped + ", Success : " + success + ", Error : " + error);
+        if (ham > 0 || tomato > 0 || spam > 0){
+            logger.info("Ham : " + ham + ", Tomato : " + tomato + ", Spam : " + spam);
+        }
     }
 
     @NotNull

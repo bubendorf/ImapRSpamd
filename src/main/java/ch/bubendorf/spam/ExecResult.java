@@ -57,7 +57,7 @@ public class ExecResult {
         if (matcher.find()) {
             return Double.parseDouble(matcher.group(1));
         }
-        return 0.0;
+        return Double.NaN;
     }
 
     public double getScoreThreshold() {
@@ -65,7 +65,7 @@ public class ExecResult {
         if (matcher.find()) {
             return Double.parseDouble(matcher.group(2));
         }
-        return 0.0;
+        return Double.NaN;
     }
 
     public List<Symbol> getSymbols() {
