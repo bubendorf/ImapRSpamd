@@ -39,9 +39,9 @@ public class Main {
     private int termSignalCount = 0;
 
     public static void main(final String[] args) throws MessagingException, IOException, InterruptedException {
-        logger.info("ImapRSpamd Version " + BuildVersion.getBuildVersion());
+        logger.info("Start ImapRSpamd Version " + BuildVersion.getBuildVersion());
         new Main().imapRSpamd(args);
-        logger.info("Done");
+        logger.info("Done ImapRSpamd Version " + BuildVersion.getBuildVersion());
     }
 
     public void imapRSpamd(final String[] args) throws MessagingException, IOException, InterruptedException {

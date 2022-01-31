@@ -75,6 +75,11 @@ public class ExecResultTest {
     }
 
     @Test
+    public void hasSymbols() {
+        assertTrue(execResult.hasSymbols());
+    }
+
+    @Test
     public void getSymbols() {
         assertNotNull(execResult.getSymbols());
         assertEquals(29, execResult.getSymbols().size());

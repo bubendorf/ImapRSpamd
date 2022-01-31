@@ -68,6 +68,11 @@ public class ExecResult {
         return Double.NaN;
     }
 
+    public boolean hasSymbols() {
+        final Matcher matcher = SYMBOL_PATTERN.matcher(stdout);
+        return matcher.find();
+    }
+
     public List<Symbol> getSymbols() {
         final Matcher matcher = SYMBOL_PATTERN.matcher(stdout);
         if (matcher.find()) {

@@ -10,6 +10,7 @@ import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
     public static final String X_IMAP_RSPAMD_SPAM = "X-ImapRSpamd-Spam";
     public static final String X_IMAP_RSPAMD_SCORE = "X-ImapRSpamd-Score";
     public static final String X_IMAP_RSPAMD_SYMBOLS = "X-ImapRSpamd-Symbols";
+    public static final String X_IMAP_RSPAMD_SUBJECT = "X-ImapRSpamd-Subject";
 
     private IMAPFolder hamFolder;
     private IMAPFolder tomatoFolder;
@@ -143,8 +145,13 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         copyFlags(msg, copyOfMessage);
                         copyOfMessage.setFlags(imapRSpamdFlag, true);
                     }
-                    final String newSubject = getNewSubject(msg, result);
+                    final String oldSubject = getOldSubject(msg);
+                    final String newSubject = createNewSubject(oldSubject, result);
                     copyOfMessage.setSubject(newSubject);
+                    // Remember the original subject
+                    copyOfMessage.removeHeader(X_IMAP_RSPAMD_SUBJECT);
+                    copyOfMessage.addHeader(X_IMAP_RSPAMD_SUBJECT, oldSubject);
+
                     logger.info("Rewrite subject to " + newSubject);
                 }
                 case "delete" -> {
@@ -203,9 +210,17 @@ public class CheckInboxCmd extends BaseFolderCommand {
         logger.info("Move to " + destFolder.getName());
     }
 
-    private String getNewSubject(final IMAPMessage msg, final ExecResult result) throws MessagingException {
+    private String getOldSubject(final IMAPMessage msg) throws MessagingException {
+        final String[] header = msg.getHeader(X_IMAP_RSPAMD_SUBJECT);
+        if (ArrayUtils.isNotEmpty(header)) {
+            return header[0];
+        }
+        return cmdArgs.getNewSubject();
+    }
+
+    private String createNewSubject(final String oldSubject, final ExecResult result)  {
         String subject = cmdArgs.getNewSubject();
-        subject = subject.replace("%s", msg.getSubject());
+        subject = subject.replace("%s", oldSubject);
         subject = subject.replace("%c", Double.toString(result.getScore()));
         return subject;
     }

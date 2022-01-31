@@ -57,7 +57,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 logger.info(getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
                 final ExecResult result = apply(msg, sb.toString());
-                if (result.isSuccess()) {
+                if (result.isSuccess() || result.hasSymbols()) {
                     success++;
                 } else {
                     error++;
@@ -74,6 +74,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 }
             } else {
                 logger.debug("Skipped " + getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
+                skipped++;
             }
         }
         close();
