@@ -111,7 +111,8 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         openFolder(srcFolder);
 
                         copyOfMessage.setFlag(Flags.Flag.SEEN, false);
-                        srcFolder.addMessages(new Message[]{copyOfMessage});
+//                        srcFolder.addMessages(new Message[]{copyOfMessage});
+                        srcFolder.appendMessages(new Message[]{copyOfMessage});
 
                         msg.setFlag(Flags.Flag.DELETED, true);
 
@@ -215,7 +216,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
         if (ArrayUtils.isNotEmpty(header)) {
             return header[0];
         }
-        return cmdArgs.getNewSubject();
+        return msg.getSubject();
     }
 
     private String createNewSubject(final String oldSubject, final ExecResult result)  {

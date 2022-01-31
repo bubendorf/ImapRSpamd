@@ -1,5 +1,7 @@
 package ch.bubendorf.spam;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -37,6 +39,9 @@ public class ExecResult {
     private final Pattern ERROR_PATTERN = Pattern.compile("^error = \"(.+)\";$", Pattern.MULTILINE);
 
     public String getAction() {
+        if (StringUtils.isBlank(stdout)) {
+            return null;
+        }
         final Matcher matcher = ACTION_PATTERN.matcher(stdout);
         if (matcher.find()) {
             return matcher.group(1);
@@ -45,6 +50,9 @@ public class ExecResult {
     }
 
     public boolean isSpam() {
+        if (StringUtils.isBlank(stdout)) {
+            return false;
+        }
         final Matcher matcher = SPAM_PATTERN.matcher(stdout);
         if (matcher.find()) {
             return Boolean.parseBoolean(matcher.group(1));
@@ -53,6 +61,9 @@ public class ExecResult {
     }
 
     public double getScore() {
+        if (StringUtils.isBlank(stdout)) {
+            return Double.NaN;
+        }
         final Matcher matcher = SCORE_PATTERN.matcher(stdout);
         if (matcher.find()) {
             return Double.parseDouble(matcher.group(1));
@@ -61,6 +72,9 @@ public class ExecResult {
     }
 
     public double getScoreThreshold() {
+        if (StringUtils.isBlank(stdout)) {
+            return Double.NaN;
+        }
         final Matcher matcher = SCORE_PATTERN.matcher(stdout);
         if (matcher.find()) {
             return Double.parseDouble(matcher.group(2));
@@ -69,11 +83,17 @@ public class ExecResult {
     }
 
     public boolean hasSymbols() {
+        if (StringUtils.isBlank(stdout)) {
+            return false;
+        }
         final Matcher matcher = SYMBOL_PATTERN.matcher(stdout);
         return matcher.find();
     }
 
     public List<Symbol> getSymbols() {
+        if (StringUtils.isBlank(stdout)) {
+            return null;
+        }
         final Matcher matcher = SYMBOL_PATTERN.matcher(stdout);
         if (matcher.find()) {
             final List<Symbol> symbols = new ArrayList<>();
@@ -87,6 +107,9 @@ public class ExecResult {
     }
 
     public boolean isSuccess() {
+        if (StringUtils.isBlank(stdout)) {
+            return false;
+        }
         final Matcher matcher = SUCCESS_PATTERN.matcher(stdout);
         if (matcher.find()) {
             return Boolean.parseBoolean(matcher.group(1));
@@ -95,14 +118,20 @@ public class ExecResult {
     }
 
     public double getScanTime() {
+        if (StringUtils.isBlank(stdout)) {
+            return Double.NaN;
+        }
         final Matcher matcher = SCAN_TIME_PATTERN.matcher(stdout);
         if (matcher.find()) {
             return Double.parseDouble(matcher.group(1));
         }
-        return 0.0;
+        return Double.NaN;
     }
 
     public String getError() {
+        if (StringUtils.isBlank(stdout)) {
+            return null;
+        }
         final Matcher matcher = ERROR_PATTERN.matcher(stdout);
         if (matcher.find()) {
             return matcher.group(1);

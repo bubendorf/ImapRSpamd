@@ -3,9 +3,11 @@ package ch.bubendorf.spam;
 import ch.bubendorf.spam.cmd.*;
 import com.beust.jcommander.JCommander;
 import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import com.sun.mail.imap.IdleManager;
 import jakarta.mail.Folder;
+import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.event.MessageCountAdapter;
@@ -17,10 +19,7 @@ import sun.misc.Signal;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -35,6 +34,7 @@ public class Main {
     private final Object idleLock = new Object();
     private boolean keepOnIdeling;
     private IMAPFolder idleFolder;
+    private final Set<String> idleMessagesBlacklist = new HashSet<>();
 
     private int termSignalCount = 0;
 
@@ -198,8 +198,20 @@ public class Main {
                     if (ev.isRemoved()) {
                         logger.debug("Message Count Changed: Removed " + ev.getMessages().length + " messages");
                     } else {
-                        logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages");
-                        keepOnIdeling = false;
+                        try {
+                            if (hasNewMessages(ev)) {
+                                logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages");
+                                keepOnIdeling = false;
+                                for (final Message msg : ev.getMessages()) {
+                                    idleMessagesBlacklist.add((((IMAPMessage)msg).getMessageID()));
+                                }
+                            } else {
+                                logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages. Ignoring!");
+                            }
+                        } catch (final MessagingException e) {
+                            logger.error(e.getMessage(), e);
+                            keepOnIdeling = false;
+                        }
                     }
                     synchronized (idleLock) {
                         idleLock.notifyAll();
@@ -234,6 +246,20 @@ public class Main {
         }
 
         logger.debug("Finish ideling");
+    }
+
+    /*
+     * @return true if we haven't seen any of the new messages
+     */
+    private boolean hasNewMessages(final MessageCountEvent ev) throws MessagingException {
+        if (!ev.isRemoved()) {
+            for (final Message msg : ev.getMessages()) {
+                if (!idleMessagesBlacklist.contains(((IMAPMessage)msg).getMessageID())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private IMAPFolder getIdleFolder(final IMAPStore store) throws MessagingException {
