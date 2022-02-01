@@ -7,6 +7,7 @@ import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import jakarta.mail.*;
 import jakarta.mail.internet.MimeMessage;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,7 +99,11 @@ public abstract class BaseFolderCommand extends BaseCommand {
         // Empty
     }
 
-    protected boolean isEligible(final Message msg) throws MessagingException {
+    protected boolean isEligible(final IMAPMessage msg) throws MessagingException {
+        if (CollectionUtils.isNotEmpty(cmdArgs.getMessageIds())) {
+            final String id = msg.getMessageID();
+            return cmdArgs.getMessageIds().contains(id);
+        }
         return true; // Override in subclass!
     }
 
@@ -119,11 +124,8 @@ public abstract class BaseFolderCommand extends BaseCommand {
         }
         sb.append("\n");
 
-        // Readig the mail text will at least set the \SEEN flag
-        // ==> Read the flags and restore them afterwards
-//        final Flags flags = msg.getFlags();
-        final String body = new String(msg.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-//        restoreFlags(msg, flags);
+
+        final String body = new String(msg.getRawInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
         sb.append(body);
         sb.append("\n");

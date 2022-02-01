@@ -88,6 +88,9 @@ public class CommandLineArguments {
     @Parameter(names = "--skipMessages", description = "Skip that many messages")
     private int skipMessages = 0;
 
+    @Parameter(names = {"--messageId"}, description = "Only process mails with given id")
+    private List<String> messageIds = new ArrayList<>();
+
     @Parameter(names = "--maxSize", description = "Maximum message size. Default: 1'000'000 bytes.")
     private int maxSize = 1048576; // 1 MB
 
@@ -225,6 +228,10 @@ public class CommandLineArguments {
 
     public int getSkipMessages() {
         return skipMessages;
+    }
+
+    public List<String> getMessageIds() {
+        return messageIds;
     }
 
     public Date getReceivedDateAfter() {

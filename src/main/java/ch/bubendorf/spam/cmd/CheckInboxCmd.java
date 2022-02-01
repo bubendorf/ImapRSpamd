@@ -39,9 +39,9 @@ public class CheckInboxCmd extends BaseFolderCommand {
     }
 
     @Override
-    protected boolean isEligible(final Message msg) throws MessagingException {
+    protected boolean isEligible(final IMAPMessage msg) throws MessagingException {
         final Flags flags = msg.getFlags();
-        return !flags.contains(imapRSpamdFlag);
+        return super.isEligible(msg) && !flags.contains(imapRSpamdFlag);
     }
 
     @Override
