@@ -187,62 +187,78 @@ public class Main {
         stayInMainLoop = true;
         keepOnIdeling = true;
 
-        if (execService == null) {
-            execService = Executors.newCachedThreadPool();
-        }
-        final IMAPFolder idleFolder = getIdleFolder(store);
-        if (idleManager == null) {
-            idleManager = new IdleManager(session, execService);
-            final MessageCountAdapter messageCountAdapter = new MessageCountAdapter() {
-                public void messagesAdded(final MessageCountEvent ev) {
-                    if (ev.isRemoved()) {
-                        logger.debug("Message Count Changed: Removed " + ev.getMessages().length + " messages");
-                    } else {
-                        try {
-                            if (hasNewMessages(ev)) {
-                                logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages");
-                                keepOnIdeling = false;
-                                for (final Message msg : ev.getMessages()) {
-                                    idleMessagesBlacklist.add((((IMAPMessage)msg).getMessageID()));
+        try {
+            if (execService == null) {
+                execService = Executors.newCachedThreadPool();
+            }
+            final IMAPFolder idleFolder = getIdleFolder(store);
+            if (idleManager == null) {
+                idleManager = new IdleManager(session, execService);
+                final MessageCountAdapter messageCountAdapter = new MessageCountAdapter() {
+                    public void messagesAdded(final MessageCountEvent ev) {
+                        if (ev.isRemoved()) {
+                            logger.debug("Message Count Changed: Removed " + ev.getMessages().length + " messages");
+                        } else {
+                            try {
+                                if (hasNewMessages(ev)) {
+                                    logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages");
+                                    keepOnIdeling = false;
+                                    for (final Message msg : ev.getMessages()) {
+                                        idleMessagesBlacklist.add((((IMAPMessage) msg).getMessageID()));
+                                    }
+                                } else {
+                                    logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages. Ignoring!");
                                 }
-                            } else {
-                                logger.debug("Message Count Changed: Added " + ev.getMessages().length + " messages. Ignoring!");
+                            } catch (final MessagingException e) {
+                                logger.error(e.getMessage(), e);
+                                keepOnIdeling = false;
                             }
-                        } catch (final MessagingException e) {
-                            logger.error(e.getMessage(), e);
-                            keepOnIdeling = false;
+                        }
+                        synchronized (idleLock) {
+                            idleLock.notifyAll();
                         }
                     }
-                    synchronized (idleLock) {
-                        idleLock.notifyAll();
-                    }
-                }
-            };
-            idleFolder.addMessageCountListener(messageCountAdapter);
-        }
-
-        while (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
-//            logger.debug("Watch IDLE folder");
-            idleManager.watch(idleFolder);
-            try {
-                synchronized (idleLock) {
-//                    logger.debug("Before lock()");
-                    idleLock.wait(cmdArgs.getIdleTimeout() * 1000L); // Do something after some time
-//                    logger.debug("After lock()");
-                }
-            } catch (final InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            if (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
-                // Keep the connection alive by sending an IMAP noop
-                logger.debug("Sending NoOp");
-                final IMAPFolder.ProtocolCommand noop = protocol -> {
-                    protocol.simpleCommand("NOOP", null);
-                    return null;
                 };
-                idleFolder.doCommand(noop);
+                idleFolder.addMessageCountListener(messageCountAdapter);
             }
+
+            while (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
+//            logger.debug("Watch IDLE folder");
+                idleManager.watch(idleFolder);
+                try {
+                    synchronized (idleLock) {
+//                    logger.debug("Before lock()");
+                        idleLock.wait(cmdArgs.getIdleTimeout() * 1000L); // Do something after some time
+//                    logger.debug("After lock()");
+                    }
+                } catch (final InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
+                    // Keep the connection alive by sending an IMAP noop
+                    logger.debug("Sending NoOp");
+                    final IMAPFolder.ProtocolCommand noop = protocol -> {
+                        protocol.simpleCommand("NOOP", null);
+                        return null;
+                    };
+                    idleFolder.doCommand(noop);
+                }
+            }
+        } catch (final Exception e) {
+            try {
+                if (idleFolder != null) {
+                    idleFolder.close();
+                }
+                idleFolder = null;
+                stayInMainLoop = false;
+                shutdownExecService();
+                shutdownIdleManager();
+            } catch (final Exception exceptionToIgnore) {
+                // Empty
+            }
+            // Rethrow the exception
+            throw e;
         }
 
         logger.debug("Finish ideling");
