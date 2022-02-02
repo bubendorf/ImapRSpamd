@@ -8,8 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("ALL")
 public class CommandLineArguments {
@@ -24,8 +27,8 @@ public class CommandLineArguments {
      * learnSpam: Learn the mails from the SPAM folder as spam
      * checkInbox: Run rspamc on the mails in the INBOX folder
      */
-    @Parameter(names = {"-cmd", "--command"}, description = "listFolders, learnSpam, learnHam, checkInbox, stat, idle")
-    private List<String> cmds = new ArrayList<>();
+    @Parameter(names = {"-cmd", "--command"}, description = "listFolders, learnSpam, learnHam, checkInbox, stat, idle", arity = 1)
+    private String cmds = null;
 
     @Parameter(names = {"-h", "--help"}, help = true, description = "Show this help")
     private boolean isHelp = false;
@@ -57,7 +60,7 @@ public class CommandLineArguments {
     @Parameter(names = {"-pw", "--password"}, description = "Password to login to the server", arity = 1)
     private String password = null;
 
-    @Parameter(names = {"-i", "--inbox", "--inboxFolder"}, description = "Name of the INBOX folder", arity = 1)
+    @Parameter(names = {"-i", "--inboxFolder"}, description = "Name of the INBOX folder", arity = 1)
     private String inboxFolder = "INBOX";
 
     @Parameter(names = {"--idleFolder"}, description = "Name of the IDLE folder. Default: The same as --inboxFolder", arity = 1)
@@ -72,52 +75,52 @@ public class CommandLineArguments {
     @Parameter(names = {"-s", "--spamFolder"}, description = "Name of the SPAM folder", arity = 1)
     private String spamFolder = "Junk";
 
-    @Parameter(names = "--hamFolder", description = "Name of the HAM folder")
+    @Parameter(names = "--hamFolder", description = "Name of the HAM folder", arity = 1)
     private String hamFolder = "ham";
 
-    @Parameter(names = "--trashFolder", description = "Name of the TRASH folder")
+    @Parameter(names = "--trashFolder", description = "Name of the TRASH folder", arity = 1)
     private String trashFolder = "Trash";
 
-    @Parameter(names = "--rspamc", description = "Commandline for rspamc")
+    @Parameter(names = "--rspamc", description = "Commandline for rspamc", arity = 1)
     private String rspamc = "rspamc";
     // Von Windows aus: ssh mbu@n020 rspamc
 
-    @Parameter(names = "--maxMessages", description = "Process at most this many messages")
+    @Parameter(names = "--maxMessages", description = "Process at most this many messages", arity = 1)
     private int maxMessages = Integer.MAX_VALUE;
 
-    @Parameter(names = "--skipMessages", description = "Skip that many messages")
+    @Parameter(names = "--skipMessages", description = "Skip that many messages", arity = 1)
     private int skipMessages = 0;
 
-    @Parameter(names = {"--messageId"}, description = "Only process mails with given id")
-    private List<String> messageIds = new ArrayList<>();
+    @Parameter(names = {"--messageId"}, description = "Only process mails with given id", arity = 1)
+    private String messageIds = null;
 
-    @Parameter(names = "--maxSize", description = "Maximum message size. Default: 1'000'000 bytes.")
+    @Parameter(names = "--maxSize", description = "Maximum message size. Default: 1'000'000 bytes.", arity = 1)
     private int maxSize = 1048576; // 1 MB
 
-    @Parameter(names = "--receivedDateAfter", description = "Skip messages received before the date/time")
+    @Parameter(names = "--receivedDateAfter", description = "Skip messages received before the date/time", arity = 1)
     private String receivedDateAfter = null;
     private Date receivedDateAfterDate = null;
 
-    @Parameter(names = "--receivedDateBefore", description = "Skip messages received after the date/time")
+    @Parameter(names = "--receivedDateBefore", description = "Skip messages received after the date/time", arity = 1)
     private String receivedDateBefore = null;
     private Date receivedDateBeforeDate = null;
 
-    @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash")
-    private List<String> hamActions = new ArrayList<>();
+    @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop", arity = 1)
+    private String hamActions = null;
 
-    @Parameter(names = {"--tomatoAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash")
-    private List<String> tomatoActions = new ArrayList<>();
+    @Parameter(names = {"--tomatoAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop", arity = 1)
+    private String tomatoActions = null;
 
-    @Parameter(names = {"--spamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash")
-    private List<String> spamActions = new ArrayList<>();
+    @Parameter(names = {"--spamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop", arity = 1)
+    private String spamActions = null;
 
-    @Parameter(names = "--tomatoScore", description = "Tomato score")
+    @Parameter(names = "--tomatoScore", description = "Tomato score", arity = 1)
     private double tomatoScore = 8.0;
 
-    @Parameter(names = "--spamScore", description = "Spam score")
+    @Parameter(names = "--spamScore", description = "Spam score", arity = 1)
     private double spamScore = 18.0;
 
-    @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score")
+    @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score", arity = 1)
     private String newSubject = "[SPAM %c] %s";
 
     public void setDefaults() {
@@ -125,33 +128,31 @@ public class CommandLineArguments {
             idleFolder = inboxFolder;
         }
 
-        if (tomatoActions.isEmpty()) {
-            tomatoActions.add("addHeader");
-            tomatoActions.add("move");
+        if (StringUtils.isBlank(tomatoActions)) {
+            tomatoActions = "addHeader,move";
         }
         if (!tomatoActions.contains("update") && !tomatoActions.contains("move") &&
                 !tomatoActions.contains("copy") && !tomatoActions.contains("delete")) {
-            tomatoActions.add("update");
+            tomatoActions = "update";
         }
 
-        if (spamActions.isEmpty()) {
-            spamActions.add("addHeader");
-            spamActions.add("move");
+        if (StringUtils.isBlank(spamActions)) {
+            spamActions = "addHeader,move";
         }
         if (!spamActions.contains("update") && !spamActions.contains("move") &&
                 !spamActions.contains("copy") && !spamActions.contains("delete")) {
-            spamActions.add("update");
+            spamActions="update";
         }
 
         if (!hamActions.contains("update") && !hamActions.contains("move") &&
                 !hamActions.contains("copy") && !hamActions.contains("delete")) {
-            hamActions.add("update");
+            hamActions="update";
         }
     }
 
     public boolean isValid() {
 
-        if (CollectionUtils.isEmpty(cmds)) {
+        if (StringUtils.isBlank(cmds)) {
             logger.error("Missing commands");
             return false;
         }
@@ -170,8 +171,17 @@ public class CommandLineArguments {
         return true;
     }
 
+    private static List<String> toList(final String csv) {
+        if (StringUtils.isBlank(csv)) {
+            return Collections.emptyList();
+        }
+        return Stream.of(csv.split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
+    }
+
     public List<String> getCmds() {
-        return cmds;
+        return toList(cmds);
     }
 
     public boolean isHelp() {
@@ -231,7 +241,7 @@ public class CommandLineArguments {
     }
 
     public List<String> getMessageIds() {
-        return messageIds;
+        return toList(messageIds);
     }
 
     public Date getReceivedDateAfter() {
@@ -261,15 +271,15 @@ public class CommandLineArguments {
     }
 
     public List<String> getHamActions() {
-        return hamActions;
+        return toList(hamActions);
     }
 
     public List<String> getTomatoActions() {
-        return tomatoActions;
+        return toList(tomatoActions);
     }
 
     public List<String> getSpamActions() {
-        return spamActions;
+        return toList(spamActions);
     }
 
     public double getTomatoScore() {

@@ -33,7 +33,7 @@ public abstract class BaseCommand {
         final String cmdLine = cmdArgs.getRspamc() + " " + parameters;
 //        final String cmdLine = "C:\\Windows\\System32\\OpenSSH\\ssh.exe mbu@n020 cat";
 
-        logger.debug(cmdLine);
+        logger.debug("exec '" + cmdLine + "'");
         final String[] cmds = cmdLine.split(" ");
         builder.command(cmds);
 

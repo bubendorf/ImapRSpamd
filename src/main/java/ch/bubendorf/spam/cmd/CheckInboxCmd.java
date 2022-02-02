@@ -162,6 +162,9 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 case "trash" -> {
                     moveTo(copyOfMessage, msg, getTrashFolder());
                 }
+                case "noop" -> {
+                    // No-Operation
+                }
                 default -> {
                     throw new IllegalArgumentException("Unknown action: " + action);
                 }
