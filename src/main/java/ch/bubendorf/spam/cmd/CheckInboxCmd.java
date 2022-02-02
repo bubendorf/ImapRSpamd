@@ -121,7 +121,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 }
                 case "addHeader" -> {
                     final String[] existingScore = msg.getHeader(X_IMAP_RSPAMD_SCORE);
-                    final double newScore = result.getScore() - 1;
+                    final double newScore = result.getScore();
                     if (existingScore == null || !equalScore(existingScore[0], newScore)) {
                         if (copyOfMessage == null) {
                             copyOfMessage = new MimeMessage(msg);
@@ -132,7 +132,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         copyOfMessage.addHeader(X_IMAP_RSPAMD_SPAM, Boolean.toString(result.isSpam()));
 
                         copyOfMessage.removeHeader(X_IMAP_RSPAMD_SCORE);
-                        copyOfMessage.addHeader(X_IMAP_RSPAMD_SCORE, Double.toString(result.getScore()));
+                        copyOfMessage.addHeader(X_IMAP_RSPAMD_SCORE, Double.toString(newScore));
 
                         copyOfMessage.removeHeader(X_IMAP_RSPAMD_SYMBOLS);
                         copyOfMessage.addHeader(X_IMAP_RSPAMD_SYMBOLS, result.getSymbolText());
