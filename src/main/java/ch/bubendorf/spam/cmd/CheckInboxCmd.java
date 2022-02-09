@@ -18,7 +18,6 @@ import java.util.List;
 
 public class CheckInboxCmd extends BaseFolderCommand {
 
-    private static final Flags imapRSpamdFlag = new Flags("ImapRSpamd");
     public static final String X_IMAP_RSPAMD_SPAM = "X-ImapRSpamd-Spam";
     public static final String X_IMAP_RSPAMD_SCORE = "X-ImapRSpamd-Score";
     public static final String X_IMAP_RSPAMD_SYMBOLS = "X-ImapRSpamd-Symbols";
@@ -41,7 +40,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
     @Override
     protected boolean isEligible(final IMAPMessage msg) throws MessagingException {
         final Flags flags = msg.getFlags();
-        return super.isEligible(msg) && !flags.contains(imapRSpamdFlag);
+        return super.isEligible(msg) && !flags.contains(CheckInboxFlag);
     }
 
     @Override
@@ -64,7 +63,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     ", stderr=" + result.getStderr());
         }
 
-        msg.setFlags(imapRSpamdFlag, true);
+        msg.setFlags(CheckInboxFlag, true);
 
         return result;
     }
@@ -126,7 +125,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         if (copyOfMessage == null) {
                             copyOfMessage = new MimeMessage(msg);
                             copyFlags(msg, copyOfMessage);
-                            copyOfMessage.setFlags(imapRSpamdFlag, true);
+                            copyOfMessage.setFlags(CheckInboxFlag, true);
                         }
                         copyOfMessage.removeHeader(X_IMAP_RSPAMD_SPAM);
                         copyOfMessage.addHeader(X_IMAP_RSPAMD_SPAM, Boolean.toString(result.isSpam()));
@@ -144,7 +143,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     if (copyOfMessage == null) {
                         copyOfMessage = new MimeMessage(msg);
                         copyFlags(msg, copyOfMessage);
-                        copyOfMessage.setFlags(imapRSpamdFlag, true);
+                        copyOfMessage.setFlags(CheckInboxFlag, true);
                     }
                     final String oldSubject = getOldSubject(msg);
                     final String newSubject = createNewSubject(oldSubject, result);

@@ -19,6 +19,11 @@ import java.util.Enumeration;
 import static jakarta.mail.Flags.Flag.*;
 
 public abstract class BaseFolderCommand extends BaseCommand {
+
+    protected static final Flags CheckInboxFlag = new Flags("ImapRSpamd");
+    protected static final Flags LearnHamFlag = new Flags("ImapRSpamdHam");
+    protected static final Flags LearnSpamFlag = new Flags("ImapRSpamdSpam");
+
     protected final IMAPStore store;
     protected IMAPFolder srcFolder;
 

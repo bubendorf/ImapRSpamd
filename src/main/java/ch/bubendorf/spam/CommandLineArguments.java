@@ -2,12 +2,10 @@ package ch.bubendorf.spam;
 
 import com.beust.jcommander.Parameter;
 import com.github.sisyphsu.dateparser.DateParserUtils;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
