@@ -46,7 +46,7 @@ public class CommandLineArguments {
     @Parameter(names = {"--protocol"}, description = "Protocol: imap or imaps", arity = 1)
     private String protcol = "imaps";
 
-    @Parameter(names = {"--starttls"}, description = "Use STARTTLS", arity = 1)
+    @Parameter(names = {"--starttls"}, description = "Use STARTTLS")
     private boolean starttls = false;
 
     @Parameter(names = {"--ssltrust"}, description = "Trust all SSL/TSL certificates", arity = 1)
@@ -120,6 +120,9 @@ public class CommandLineArguments {
 
     @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score", arity = 1)
     private String newSubject = "[SPAM %c] %s";
+
+    @Parameter(names = {"--systemd"}, description = "Run as a systemd service")
+    private boolean systemd = false;
 
     public void setDefaults() {
         if (idleFolder == null) {
@@ -306,5 +309,9 @@ public class CommandLineArguments {
 
     public int getMaxSize() {
         return maxSize;
+    }
+
+    public boolean isSystemd() {
+        return systemd;
     }
 }

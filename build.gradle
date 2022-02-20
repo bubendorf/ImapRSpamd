@@ -8,7 +8,7 @@ plugins {
 apply plugin: 'application'
 
 group 'ch.bubendorf.spam'
-version '1.3'
+version '1.4'
 
 compileJava {
     sourceCompatibility = 17
@@ -43,6 +43,7 @@ dependencies {
     implementation 'org.apache.commons:commons-collections4:4.4'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'com.github.sisyphsu:dateparser:1.0.9'
+    implementation 'info.faljse:SDNotify:1.3'
 
     compileOnly 'org.jetbrains:annotations:23.0.0'
 

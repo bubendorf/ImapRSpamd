@@ -6,6 +6,7 @@ import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPMessage;
 import com.sun.mail.imap.IMAPStore;
 import com.sun.mail.imap.IdleManager;
+import info.faljse.SDNotify.SDNotify;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -84,6 +85,14 @@ public class Main {
             System.exit(2);
         }
 
+        if (cmdArgs.isSystemd()) {
+            final long pid = ProcessHandle.current().pid();
+            SDNotify.sendMainPID((int)pid);
+
+            SDNotify.sendNotify(); //notify: ready
+            SDNotify.sendStatus("ImapRSpamd Version " + BuildVersion.getBuildVersion() + " running.");
+        }
+
         final Properties props = System.getProperties();
         props.setProperty("mail.store.protocol", cmdArgs.getProtcol());
         if (cmdArgs.isStarttls()) {
@@ -108,6 +117,11 @@ public class Main {
         store.connect(cmdArgs.getHost(), cmdArgs.getPort(), cmdArgs.getUser(), cmdArgs.getPassword());
 
         mainLoop(session, store);
+
+        if (cmdArgs.isSystemd()) {
+            SDNotify.sendStatus("ImapRSpamd Version " + BuildVersion.getBuildVersion() + " terminated.");
+            SDNotify.sendStopping();
+        }
 
         store.close();
     }
@@ -183,7 +197,8 @@ public class Main {
     }
 
     private void idle(final Session session, final IMAPStore store) throws IOException, MessagingException {
-        logger.debug("Begin IDLE");
+        final long idleTimeoutMillis = getIdleTimeoutMillis();
+        logger.debug("Begin IDLE (" + idleTimeoutMillis + " ms)");
         stayInMainLoop = true;
         keepOnIdeling = true;
 
@@ -224,11 +239,14 @@ public class Main {
 
             while (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
 //            logger.debug("Watch IDLE folder");
+                if (cmdArgs.isSystemd()) {
+                    SDNotify.sendWatchdog();
+                }
                 idleManager.watch(idleFolder);
                 try {
                     synchronized (idleLock) {
 //                    logger.debug("Before lock()");
-                        idleLock.wait(cmdArgs.getIdleTimeout() * 1000L); // Do something after some time
+                        idleLock.wait(idleTimeoutMillis); // Do something after some time
 //                    logger.debug("After lock()");
                     }
                 } catch (final InterruptedException e) {
@@ -262,6 +280,15 @@ public class Main {
         }
 
         logger.debug("Finish ideling");
+    }
+
+    private long getIdleTimeoutMillis() {
+        final long cmdLineTimeOut = cmdArgs.getIdleTimeout()* 1000L;
+        long systemdTimeout = Integer.MAX_VALUE;
+        if (cmdArgs.isSystemd() && SDNotify.isWatchdogEnabled()) {
+            systemdTimeout = SDNotify.getWatchdogFrequency() / 1000 / 2 - 500;
+        }
+        return Math.min(cmdLineTimeOut, systemdTimeout);
     }
 
     /*
