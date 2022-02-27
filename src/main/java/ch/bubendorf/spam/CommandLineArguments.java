@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,14 +32,14 @@ public class CommandLineArguments {
     @Parameter(names = {"-h", "--help"}, help = true, description = "Show this help")
     private boolean isHelp = false;
 
-    @Parameter(names = { "-v", "--verbose" }, description = "Be verbose")
+    @Parameter(names = {"-v", "--verbose"}, description = "Be verbose")
     private boolean verbose = false;
 
-    @Parameter(names = { "-f", "--force" }, description = "Process even already processed mails")
+    @Parameter(names = {"-f", "--force"}, description = "Process even already processed mails")
     private boolean force = false;
 
     @Parameter(names = {"-H", "--host"}, description = "Host name", arity = 1)
-    private String host= null;
+    private String host = null;
 
     @Parameter(names = {"-p", "--port"}, description = "Port number", arity = 1)
     private int port = 993;
@@ -92,7 +93,7 @@ public class CommandLineArguments {
     @Parameter(names = {"--messageId"}, description = "Only process mails with given id", arity = 1)
     private String messageIds = null;
 
-    @Parameter(names = "--maxSize", description = "Maximum message size. Default: 1'000'000 bytes.", arity = 1)
+    @Parameter(names = "--maxSize", description = "Maximum message size. Default: 1'048'576 bytes.", arity = 1)
     private int maxSize = 1048576; // 1 MB
 
     @Parameter(names = "--receivedDateAfter", description = "Skip messages received before the date/time", arity = 1)
@@ -103,14 +104,22 @@ public class CommandLineArguments {
     private String receivedDateBefore = null;
     private Date receivedDateBeforeDate = null;
 
-    @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop", arity = 1)
+    @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop\n" +
+            "\taddHeader: Add the X-ImapRSpamd-XXX headers to the message\n" +
+            "\trewriteSubject: Replace the subject of the message\n" +
+            "\tupdate: Update the message (if changed)\n" +
+            "\tmove: Move the message to the ham/tomato/spam folder\n" +
+            "\tcopy: Copy the message to the ham/tomate/spam folder\n" +
+            "\tdelete: Delete the message\n" +
+            "\ttrash: Moce the message to the trash folder\n" +
+            "\tnoop: Do nothing\n", arity = 1)
     private String hamActions = null;
 
     @Parameter(names = {"--tomatoAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop", arity = 1)
-    private String tomatoActions = null;
+    private String tomatoActions = "addHeader,move";
 
     @Parameter(names = {"--spamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop", arity = 1)
-    private String spamActions = null;
+    private String spamActions = "addHeader,move";
 
     @Parameter(names = "--tomatoScore", description = "Tomato score", arity = 1)
     private double tomatoScore = 8.0;
@@ -121,7 +130,7 @@ public class CommandLineArguments {
     @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score", arity = 1)
     private String newSubject = "[SPAM %c] %s";
 
-    @Parameter(names = {"--systemd"}, description = "Run as a systemd service")
+    @Parameter(names = {"--systemd"}, description = "Run as a systemd service. Send watchdog messages.")
     private boolean systemd = false;
 
     public void setDefaults() {
@@ -134,7 +143,7 @@ public class CommandLineArguments {
         }
         if (!tomatoActions.contains("update") && !tomatoActions.contains("move") &&
                 !tomatoActions.contains("copy") && !tomatoActions.contains("delete")) {
-            tomatoActions = "update";
+            tomatoActions += ",update";
         }
 
         if (StringUtils.isBlank(spamActions)) {
@@ -142,12 +151,13 @@ public class CommandLineArguments {
         }
         if (!spamActions.contains("update") && !spamActions.contains("move") &&
                 !spamActions.contains("copy") && !spamActions.contains("delete")) {
-            spamActions="update";
+            spamActions += ",update";
         }
 
-        if (!hamActions.contains("update") && !hamActions.contains("move") &&
+        if (StringUtils.isNotBlank(hamActions) &&
+                !hamActions.contains("update") && !hamActions.contains("move") &&
                 !hamActions.contains("copy") && !hamActions.contains("delete")) {
-            hamActions="update";
+            hamActions += ",update";
         }
     }
 
@@ -173,11 +183,13 @@ public class CommandLineArguments {
     }
 
     private static List<String> toList(final String csv) {
+        // Empty CSV ==> Empty list
         if (StringUtils.isBlank(csv)) {
             return Collections.emptyList();
         }
         return Stream.of(csv.split(","))
                 .map(String::trim)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

@@ -49,12 +49,17 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
         if (result.getExitCode() == 0) {
             final double score = result.getScore();
-            if (score >= cmdArgs.getSpamScore()) {
-                processAsSpam(msg, result);
-            } else if (score >= cmdArgs.getTomatoScore()) {
-                processAsTomato(msg, result);
+            if (Double.isNaN(score)) {
+                logger.warn("Got strange result from rspamc\nstdout=" + result.getStdout() + "\nstderr=" + result.getStderr());
             } else {
-                processAsHam(msg, result);
+                if (score >= cmdArgs.getSpamScore()) {
+                    processAsSpam(msg, result);
+                } else if (score >= cmdArgs.getTomatoScore()) {
+                    processAsTomato(msg, result);
+                } else {
+                    processAsHam(msg, result);
+                }
+                msg.setFlags(CheckInboxFlag, true);
             }
         } else {
             // Hmmm. Something happened. I think it is best we don't do anything
@@ -62,9 +67,6 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     ", stdout=" + result.getStdout() +
                     ", stderr=" + result.getStderr());
         }
-
-        msg.setFlags(CheckInboxFlag, true);
-
         return result;
     }
 
@@ -106,7 +108,8 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 }
                 case "update" -> {
                     if (copyOfMessage != null) {
-                        // Add the copy of the message to the source folder and delete the original
+                        // Add the copy of the message to the source folder and delete the original.
+                        // Do nothing if the message has not been changed!
                         openFolder(srcFolder);
 
                         copyOfMessage.setFlag(Flags.Flag.SEEN, false);

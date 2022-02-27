@@ -51,6 +51,7 @@ public class Main {
         jCommander.setAllowAbbreviatedOptions(true);
         jCommander.setExpandAtSign(true);
         jCommander.setAllowParameterOverwriting(true);
+        jCommander.setColumnSize(120);
 
         final List<String> allArgs = new ArrayList<>();
         for (final String file : new String[]{"/etc/imaprspamd/default.conf",
@@ -127,6 +128,8 @@ public class Main {
     }
 
     private void installSignalHandlers() {
+
+        // Install a signal handler to terminate the process on SIGTERM
         Signal.handle(new Signal("TERM"), sig -> {
             logger.info("Received TERM signal!");
             termSignalCount++;
@@ -142,6 +145,11 @@ public class Main {
                 System.exit(0);
             }
         });
+
+        // Install a signal handler to test the systemd integration
+        /*Signal.handle(new Signal("USR1"), sig -> {
+            logger.debug("Received USR1 signal");
+        });*/
     }
 
     private void shutdownIdleManager() {
@@ -240,6 +248,7 @@ public class Main {
             while (idleManager != null && idleManager.isRunning() && keepOnIdeling && stayInMainLoop) {
 //            logger.debug("Watch IDLE folder");
                 if (cmdArgs.isSystemd()) {
+                    logger.debug("Trigger systemd watchdog");
                     SDNotify.sendWatchdog();
                 }
                 idleManager.watch(idleFolder);
@@ -283,10 +292,10 @@ public class Main {
     }
 
     private long getIdleTimeoutMillis() {
-        final long cmdLineTimeOut = cmdArgs.getIdleTimeout()* 1000L;
+        final long cmdLineTimeOut = cmdArgs.getIdleTimeout() * 1000L;
         long systemdTimeout = Integer.MAX_VALUE;
         if (cmdArgs.isSystemd() && SDNotify.isWatchdogEnabled()) {
-            systemdTimeout = SDNotify.getWatchdogFrequency() / 1000 / 2 - 500;
+            systemdTimeout = SDNotify.getWatchdogFrequency() / 1000 / 2 - 1000;
         }
         return Math.min(cmdLineTimeOut, systemdTimeout);
     }

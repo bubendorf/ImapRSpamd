@@ -3,18 +3,24 @@ Description=IMAP to Rspamd
 After=rspamd.service
 
 [Service]
-Type=simple
-PIDFile=/run/ImapRSpand.pid
+Type=notify
+PIDFile=/run/ImapRSpamd.pid
 User=mbu
 Group=mbu
 WorkingDirectory=/opt/ImapRSpamd
 Environment="LANG=en_US.utf8"
 
+# See http://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html for logging properties
+#StandardOutput=file:/var/log/ImapRSpamd.log
+#StandardError=file:/var/log/ImapRSpamd.log
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=ImapRSpamd
-ExecStart=java -Dorg.slf4j.simpleLogger.showDateTime=false -jar ImapRSpamd-1.0-all.jar --command checkInbox,idle
-ExecStop =/bin/kill -s TERM $MAINPID
+ExecStart=/opt/graalvm/bin/java -Dorg.slf4j.simpleLogger.defaultLogLevel=debug -Dorg.slf4j.simpleLogger.showDateTime=false -jar ImapRSpamd-1.4-all.jar --command  checkInbox,learnHam,learnSpam,idle --systemd
+ExecStop=/bin/kill -s TERM $MAINPID
+TimeoutStopSec=10
+WatchdogSec=1800
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
