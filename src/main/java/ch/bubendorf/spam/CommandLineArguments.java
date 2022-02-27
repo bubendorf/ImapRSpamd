@@ -26,7 +26,13 @@ public class CommandLineArguments {
      * learnSpam: Learn the mails from the SPAM folder as spam
      * checkInbox: Run rspamc on the mails in the INBOX folder
      */
-    @Parameter(names = {"-cmd", "--command"}, description = "listFolders, learnSpam, learnHam, checkInbox, stat, idle", arity = 1)
+    @Parameter(names = {"-cmd", "--command"}, description = "listFolders, learnSpam, learnHam, checkInbox, stat, idle\n" +
+            "\tlistFolders: List the IMAP folders on the server\n" +
+            "\tlearnSpam: Learn the mails from the spam folder as spam\n" +
+            "\tlearnHam: Learn the mails from the ham folder as ham\n" +
+            "\tcheckInbox: Check the mails in the inbox and perform the hamAction, tomatoAction or the spamAction\n" +
+            "\tstat: Show output of the rspamc stat command\n" +
+            "\tidle: Do not exit but wait for new mails\n", arity = 1)
     private String cmds = null;
 
     @Parameter(names = {"-h", "--help"}, help = true, description = "Show this help")
@@ -121,10 +127,10 @@ public class CommandLineArguments {
     @Parameter(names = {"--spamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop", arity = 1)
     private String spamActions = "addHeader,move";
 
-    @Parameter(names = "--tomatoScore", description = "Tomato score", arity = 1)
+    @Parameter(names = "--tomatoScore", description = "Tomato score. Mails with a higer score are treated as tomato mails", arity = 1)
     private double tomatoScore = 8.0;
 
-    @Parameter(names = "--spamScore", description = "Spam score", arity = 1)
+    @Parameter(names = "--spamScore", description = "Spam score. Mails with a higher score are treated as spam", arity = 1)
     private double spamScore = 18.0;
 
     @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score", arity = 1)

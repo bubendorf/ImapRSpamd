@@ -11,8 +11,8 @@ group 'ch.bubendorf.spam'
 version '1.4.1'
 
 compileJava {
-    sourceCompatibility = 17
-    targetCompatibility = 17
+    sourceCompatibility = 14
+    targetCompatibility = 14
 }
 compileJava.options.encoding = 'UTF-8'
 
