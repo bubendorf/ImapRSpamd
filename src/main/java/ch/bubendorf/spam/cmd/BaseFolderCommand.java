@@ -33,13 +33,14 @@ public abstract class BaseFolderCommand extends BaseCommand {
     }
 
     public void run() throws MessagingException, IOException, InterruptedException {
-        srcFolder = (IMAPFolder)store.getFolder(getFolderName());
+        srcFolder = (IMAPFolder) store.getFolder(getFolderName());
         srcFolder.open(Folder.READ_WRITE);
         final Message[] genericMessages = srcFolder.getMessages();
         final IMAPMessage[] messages = Arrays.copyOf(genericMessages, genericMessages.length, IMAPMessage[].class);
         int count = 0;
         int skipped = 0;
         int success = 0;
+        int ignored = 0;
         int error = 0;
         int ham = 0;
         int tomato = 0;
@@ -63,7 +64,9 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 logger.info(getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
                 final ExecResult result = apply(msg, sb.toString());
-                if (result.isSuccess() || result.hasSymbols()) {
+                if (result.isIgnore()) {
+                    ignored++;
+                } else if (result.isSuccess() || result.hasSymbols()) {
                     success++;
                 } else {
                     error++;
@@ -85,8 +88,8 @@ public abstract class BaseFolderCommand extends BaseCommand {
         }
         close();
         srcFolder.close(true);
-        logger.info(getName() + " : Skipped : " + skipped + ", Success : " + success + ", Error : " + error);
-        if (ham > 0 || tomato > 0 || spam > 0){
+        logger.info(getName() + " : Skipped : " + skipped + ", Success : " + success + ", Ignored : " + ignored + ", Error : " + error);
+        if (ham > 0 || tomato > 0 || spam > 0) {
             logger.info("Ham : " + ham + ", Tomato : " + tomato + ", Spam : " + spam);
         }
     }
@@ -113,6 +116,7 @@ public abstract class BaseFolderCommand extends BaseCommand {
     }
 
     protected abstract String getFolderName();
+
     protected abstract ExecResult apply(final IMAPMessage msg, final String messageText) throws IOException, InterruptedException, MessagingException;
 
     protected String getMessageId(final IMAPMessage msg) throws MessagingException {

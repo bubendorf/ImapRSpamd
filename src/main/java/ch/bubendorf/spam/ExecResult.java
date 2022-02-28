@@ -117,6 +117,12 @@ public class ExecResult {
         return false;
     }
 
+    public boolean isIgnore() {
+        final String errorText = getError();
+        return StringUtils.isNoneBlank(errorText) &&
+                (errorText.contains("denied learning") || errorText.contains("has been already learned"));
+    }
+
     public double getScanTime() {
         if (StringUtils.isBlank(stdout)) {
             return Double.NaN;

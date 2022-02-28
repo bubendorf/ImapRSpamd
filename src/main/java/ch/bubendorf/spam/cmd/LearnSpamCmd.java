@@ -23,6 +23,7 @@ public class LearnSpamCmd extends BaseFolderCommand {
     @Override
     protected boolean isEligible(final IMAPMessage msg) throws MessagingException {
         final Flags flags = msg.getFlags();
+        // Only process mails which do NOT have the 'ImapRSpamdSpam' flag
         return super.isEligible(msg) && !flags.contains(LearnSpamFlag);
     }
 

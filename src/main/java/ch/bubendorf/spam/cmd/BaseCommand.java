@@ -28,10 +28,17 @@ public abstract class BaseCommand {
 
     public abstract String getName();
 
+    /**
+     * Call rspamc
+     * @param parameters The command line parameters for rspamc
+     * @param stdinText The text to pipe into rspamcs stdin
+     * @return ExitCode, Stdout and Stderr of the call to rspamc
+     * @throws IOException Something happened
+     * @throws InterruptedException Something happened
+     */
     protected ExecResult execRSpamd(final String parameters, final String stdinText) throws IOException, InterruptedException {
         final ProcessBuilder builder = new ProcessBuilder();
         final String cmdLine = cmdArgs.getRspamc() + " " + parameters;
-//        final String cmdLine = "C:\\Windows\\System32\\OpenSSH\\ssh.exe mbu@n020 cat";
 
         logger.debug("exec '" + cmdLine + "'");
         final String[] cmds = cmdLine.split(" ");
