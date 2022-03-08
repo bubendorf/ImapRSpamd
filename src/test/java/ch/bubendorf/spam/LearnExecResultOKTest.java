@@ -10,12 +10,14 @@ public class LearnExecResultOKTest {
 
     @BeforeEach
     public void setup() {
-        execResult = new ExecResult(0, "Results for file: stdin (0.019 seconds)\n" +
-                "success = true;\n" +
-                "filename = \"stdin\";\n" +
-                "scan_time = 0.020000;\n" +
-                "error = \"<2129771540.22645.1643036940491@789ac7b1-778f-410d-7b83-3144> has been already learned as ham, ignore it\";\n" +
-                "\n", "");
+        execResult = new ExecResult("", 0, """
+                Results for file: stdin (0.019 seconds)
+                success = true;
+                filename = "stdin";
+                scan_time = 0.020000;
+                error = "<2129771540.22645.1643036940491@789ac7b1-778f-410d-7b83-3144> has been already learned as ham, ignore it";
+
+                """, "");
     }
 
     @Test

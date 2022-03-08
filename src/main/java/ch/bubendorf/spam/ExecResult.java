@@ -8,14 +8,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ExecResult {
+    private final String input;
     private final int exitCode;
     private final String stdout;
     private final String stderr;
 
-    public ExecResult(final int exitCode, final String stdout, final String stderr) {
+    public ExecResult(final String input, final int exitCode, final String stdout, final String stderr) {
+        this.input = input;
         this.exitCode = exitCode;
         this.stdout = stdout;
         this.stderr = stderr;
+    }
+
+    public String getInput() {
+        return input;
     }
 
     public int getExitCode() {

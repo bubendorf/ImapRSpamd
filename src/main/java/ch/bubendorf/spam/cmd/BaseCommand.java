@@ -63,7 +63,7 @@ public abstract class BaseCommand {
 
         executorService.shutdown();
 
-        return new ExecResult(exitCode, stdoutGobbler.getResult(), stderrGobbler.getResult());
+        return new ExecResult(stdinText, exitCode, stdoutGobbler.getResult(), stderrGobbler.getResult());
     }
 
     protected boolean isSmallEnough(final IMAPMessage msg) throws MessagingException {

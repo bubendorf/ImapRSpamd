@@ -50,7 +50,10 @@ public class CheckInboxCmd extends BaseFolderCommand {
         if (result.getExitCode() == 0) {
             final double score = result.getScore();
             if (Double.isNaN(score)) {
-                logger.warn("Got strange result from rspamc\nstdout=" + result.getStdout() + "\nstderr=" + result.getStderr());
+                logger.warn("Got strange result from rspamc" +
+                        "\nlength of input=" + result.getInput().length() +
+                        "\nstdout=" + result.getStdout() +
+                        "\nstderr=" + result.getStderr());
             } else {
                 if (score >= cmdArgs.getSpamScore()) {
                     processAsSpam(msg, result);

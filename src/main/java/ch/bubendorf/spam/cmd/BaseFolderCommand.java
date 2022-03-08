@@ -63,6 +63,10 @@ public abstract class BaseFolderCommand extends BaseCommand {
                 }
                 logger.info(getMessageId(msg) + "/" + getFrom(msg) + "/" + msg.getSubject());
                 final StringBuilder sb = getMailText(msg);
+                if (sb.length() == 0) {
+                    logger.error("PANIC: Could not download message text!");
+                    System.exit(1);
+                }
                 final ExecResult result = apply(msg, sb.toString());
                 if (result.isIgnore()) {
                     ignored++;
@@ -132,7 +136,6 @@ public abstract class BaseFolderCommand extends BaseCommand {
             sb.append(header.getName()).append(": ").append(header.getValue()).append("\n");
         }
         sb.append("\n");
-
 
         final String body = new String(msg.getRawInputStream().readAllBytes(), StandardCharsets.UTF_8);
 

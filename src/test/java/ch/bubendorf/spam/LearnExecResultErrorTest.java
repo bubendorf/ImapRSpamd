@@ -10,11 +10,13 @@ public class LearnExecResultErrorTest {
 
     @BeforeEach
     public void setup() {
-        execResult = new ExecResult(0, "Results for file: stdin (0.007 seconds)\n" +
-                "error = \"all learn conditions denied learning spam in default classifier\";\n" +
-                "filename = \"stdin\";\n" +
-                "scan_time = 0.008000;\n" +
-                "\n", "");
+        execResult = new ExecResult("", 0, """
+                Results for file: stdin (0.007 seconds)
+                error = "all learn conditions denied learning spam in default classifier";
+                filename = "stdin";
+                scan_time = 0.008000;
+
+                """, "");
     }
 
     @Test
