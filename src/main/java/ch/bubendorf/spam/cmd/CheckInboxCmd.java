@@ -181,19 +181,6 @@ public class CheckInboxCmd extends BaseFolderCommand {
         return Double.parseDouble(oldScore) == newScore;
     }
 
-    /*private boolean equalsNoWhiteSpace(final String a, final String b) {
-        //noinspection StringEquality
-        if (a == b) {
-            return true;
-        }
-        if (a == null || b == null) {
-            return false;
-        }
-        final String a2 = a.replaceAll("\\s","");
-        final String b2 = b.replaceAll("\\s","");
-        return a2.equals(b2);
-    }*/
-
     private void copyFlags(final IMAPMessage srcMessage, final MimeMessage destMessage) throws MessagingException {
         final Flags srcFlags = srcMessage.getFlags();
         restoreFlags(destMessage, srcFlags);

@@ -48,12 +48,6 @@ public class Symbol {
         return name + (Double.isNaN(score) ? "" : " (" + score + ")");
     }
 
-    /*@NonNull
-    public String getFormatted() {
-        final String formattedDesc = desc == null ? null : descFormatters.getOrDefault(name, in->in).apply(desc);
-        return name + (Double.isNaN(score) ? "" : " (" + score + ")") + (formattedDesc == null ? "" : "[" + formattedDesc + "]");
-    }*/
-
     @NotNull
     public String getName() {
         return name;

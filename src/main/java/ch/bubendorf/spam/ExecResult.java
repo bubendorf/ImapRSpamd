@@ -36,9 +36,9 @@ public class ExecResult {
         return stderr;
     }
 
-    private final Pattern ACTION_PATTERN = Pattern.compile("^Action: ([\\p{Alnum}]+)$", Pattern.MULTILINE);
-    private final Pattern SPAM_PATTERN = Pattern.compile("^Spam: ([\\p{Alnum}]+)$", Pattern.MULTILINE);
-    private final Pattern SUCCESS_PATTERN = Pattern.compile("^success = ([\\p{Alnum}]+);$", Pattern.MULTILINE);
+    private final Pattern ACTION_PATTERN = Pattern.compile("^Action: (\\p{Alnum}+)$", Pattern.MULTILINE);
+    private final Pattern SPAM_PATTERN = Pattern.compile("^Spam: (\\p{Alnum}+)$", Pattern.MULTILINE);
+    private final Pattern SUCCESS_PATTERN = Pattern.compile("^success = (\\p{Alnum}+);$", Pattern.MULTILINE);
     private final Pattern SCORE_PATTERN = Pattern.compile("^Score: ([0-9.-]+) / ([0-9.-]+)$", Pattern.MULTILINE);
     private final Pattern SCAN_TIME_PATTERN = Pattern.compile("^scan_time = ([0-9.]+);$", Pattern.MULTILINE);
     private final Pattern SYMBOL_PATTERN = Pattern.compile("^Symbol: (.+)$", Pattern.MULTILINE);
