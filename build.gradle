@@ -8,7 +8,7 @@ plugins {
 apply plugin: 'application'
 
 group 'ch.bubendorf.spam'
-version '1.4.2'
+version '1.4.3'
 
 compileJava {
     sourceCompatibility = 17

@@ -11,6 +11,7 @@ import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -211,7 +212,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
         if (ArrayUtils.isNotEmpty(header)) {
             return header[0];
         }
-        return msg.getSubject();
+        return StringUtils.defaultString(msg.getSubject());
     }
 
     private String createNewSubject(final String oldSubject, final ExecResult result)  {
