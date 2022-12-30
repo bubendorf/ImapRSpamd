@@ -129,11 +129,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     final String[] existingScore = msg.getHeader(X_IMAP_RSPAMD_SCORE);
                     final double newScore = result.getScore();
                     if (existingScore == null || !equalScore(existingScore[0], newScore)) {
-                        if (copyOfMessage == null) {
-                            copyOfMessage = new MimeMessage(msg);
-                            copyFlags(msg, copyOfMessage);
-                            copyOfMessage.setFlags(CheckInboxFlag, true);
-                        }
+                        copyOfMessage = createCopyOfMessage(msg, copyOfMessage);
                         copyOfMessage.removeHeader(X_IMAP_RSPAMD_SPAM);
                         copyOfMessage.addHeader(X_IMAP_RSPAMD_SPAM, Boolean.toString(result.isSpam()));
 
@@ -146,20 +142,32 @@ public class CheckInboxCmd extends BaseFolderCommand {
                         logger.info("Added X_IMAP_RSPAMD headers");
                     }
                 }
-                case "rewriteSubject" -> {
-                    if (copyOfMessage == null) {
-                        copyOfMessage = new MimeMessage(msg);
-                        copyFlags(msg, copyOfMessage);
-                        copyOfMessage.setFlags(CheckInboxFlag, true);
-                    }
+                case "rewriteSubject", "rewriteSubject1" -> {
+                    copyOfMessage = createCopyOfMessage(msg, copyOfMessage);
                     final String oldSubject = getOldSubject(msg);
-                    final String newSubject = createNewSubject(oldSubject, result);
+                    final String newSubject = createNewSubject1(oldSubject, result);
                     copyOfMessage.setSubject(newSubject);
-                    // Remember the original subject
-                    copyOfMessage.removeHeader(X_IMAP_RSPAMD_SUBJECT);
-                    copyOfMessage.addHeader(X_IMAP_RSPAMD_SUBJECT, oldSubject);
+                    rememberOriginalSubject(copyOfMessage, oldSubject);
 
-                    logger.info("Rewrite subject to " + newSubject);
+                    logger.info("Rewrite subject(1) to " + newSubject);
+                }
+                case "rewriteSubject2" -> {
+                    copyOfMessage = createCopyOfMessage(msg, copyOfMessage);
+                    final String oldSubject = getOldSubject(msg);
+                    final String newSubject = createNewSubject2(oldSubject, result);
+                    copyOfMessage.setSubject(newSubject);
+                    rememberOriginalSubject(copyOfMessage, oldSubject);
+
+                    logger.info("Rewrite subject(2) to " + newSubject);
+                }
+                case "rewriteSubject3" -> {
+                    copyOfMessage = createCopyOfMessage(msg, copyOfMessage);
+                    final String oldSubject = getOldSubject(msg);
+                    final String newSubject = createNewSubject3(oldSubject, result);
+                    copyOfMessage.setSubject(newSubject);
+                    rememberOriginalSubject(copyOfMessage, oldSubject);
+
+                    logger.info("Rewrite subject(3) to " + newSubject);
                 }
                 case "delete" -> {
                     msg.setFlag(Flags.Flag.DELETED, true);
@@ -176,6 +184,22 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 }
             }
         }
+    }
+
+    private static void rememberOriginalSubject(final MimeMessage copyOfMessage, final String oldSubject) throws MessagingException {
+        // Remember the original subject
+        copyOfMessage.removeHeader(X_IMAP_RSPAMD_SUBJECT);
+        copyOfMessage.addHeader(X_IMAP_RSPAMD_SUBJECT, oldSubject);
+    }
+
+    @NotNull
+    private MimeMessage createCopyOfMessage(final IMAPMessage msg, MimeMessage copyOfMessage) throws MessagingException {
+        if (copyOfMessage == null) {
+            copyOfMessage = new MimeMessage(msg);
+            copyFlags(msg, copyOfMessage);
+            copyOfMessage.setFlags(CheckInboxFlag, true);
+        }
+        return copyOfMessage;
     }
 
     private boolean equalScore(final @NotNull String oldScore, final double newScore) {
@@ -215,11 +239,26 @@ public class CheckInboxCmd extends BaseFolderCommand {
         return StringUtils.defaultString(msg.getSubject());
     }
 
-    private String createNewSubject(final String oldSubject, final ExecResult result)  {
-        String subject = cmdArgs.getNewSubject();
-        subject = subject.replace("%s", oldSubject);
-        subject = subject.replace("%c", Double.toString(result.getScore()));
-        return subject;
+    private String createNewSubject1(final String oldSubject, final ExecResult result)  {
+        final String newSubject = cmdArgs.getNewSubject1();
+        return createNewSubject(oldSubject, result, newSubject);
+    }
+
+    private String createNewSubject2(final String oldSubject, final ExecResult result)  {
+        final String newSubject = cmdArgs.getNewSubject2();
+        return createNewSubject(oldSubject, result, newSubject);
+    }
+
+    private String createNewSubject3(final String oldSubject, final ExecResult result)  {
+        final String newSubject = cmdArgs.getNewSubject3();
+        return createNewSubject(oldSubject, result, newSubject);
+    }
+
+    @NotNull
+    private static String createNewSubject(final String oldSubject, final ExecResult result, String newSubject) {
+        newSubject = newSubject.replace("%s", oldSubject);
+        newSubject = newSubject.replace("%c", Double.toString(result.getScore()));
+        return newSubject;
     }
 
     protected void close() throws MessagingException {

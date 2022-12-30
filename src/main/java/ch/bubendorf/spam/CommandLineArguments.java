@@ -112,7 +112,7 @@ public class CommandLineArguments {
 
     @Parameter(names = {"--hamAction"}, description = "addHeader, rewriteSubject, update, move, copy, delete, trash, noop\n" +
             "\taddHeader: Add the X-ImapRSpamd-XXX headers to the message\n" +
-            "\trewriteSubject: Replace the subject of the message\n" +
+            "\trewriteSubject[1|2|3]: Replace the subject of the message\n" +
             "\tupdate: Update the message (if changed)\n" +
             "\tmove: Move the message to the ham/tomato/spam folder\n" +
             "\tcopy: Copy the message to the ham/tomate/spam folder\n" +
@@ -133,8 +133,14 @@ public class CommandLineArguments {
     @Parameter(names = "--spamScore", description = "Spam score. Mails with a higher score are treated as spam", arity = 1)
     private double spamScore = 18.0;
 
-    @Parameter(names = "--newSubject", description = "Rewritten subject. %s=original subject, %c=Score", arity = 1)
-    private String newSubject = "[SPAM %c] %s";
+    @Parameter(names = {"--newSubject", "--newSubject1"}, description = "Rewritten subject. %s=original subject, %c=Score", arity = 1)
+    private String newSubject1 = "[SPAM %c] %s";
+
+    @Parameter(names = "--newSubject2", description = "First alternative for the rewritten subject. %s=original subject, %c=Score", arity = 1)
+    private String newSubject2 = "[HAM %c] %s";
+
+    @Parameter(names = "--newSubject3", description = "Second alternatoive for the rewritten subject. %s=original subject, %c=Score", arity = 1)
+    private String newSubject3 = "[TOMATO %c] %s";
 
     @Parameter(names = {"--systemd"}, description = "Run as a systemd service. Send watchdog messages.")
     private boolean systemd = false;
@@ -309,8 +315,16 @@ public class CommandLineArguments {
         return spamScore;
     }
 
-    public String getNewSubject() {
-        return newSubject;
+    public String getNewSubject1() {
+        return newSubject1;
+    }
+
+    public String getNewSubject2() {
+        return newSubject2;
+    }
+
+    public String getNewSubject3() {
+        return newSubject3;
     }
 
     public String getIdleFolder() {
