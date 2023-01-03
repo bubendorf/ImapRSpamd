@@ -46,15 +46,23 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     @Override
     protected ExecResult apply(final IMAPMessage msg, final String messageText) throws IOException, InterruptedException, MessagingException {
+        return apply(msg, messageText, 1);
+    }
+
+    protected ExecResult apply(final IMAPMessage msg, final String messageText, final int numberOfRetries) throws IOException, InterruptedException, MessagingException {
         final ExecResult result = execRSpamd("", messageText);
 
         if (result.getExitCode() == 0) {
             final double score = result.getScore();
             if (Double.isNaN(score)) {
-                logger.warn("Got strange result from rspamc" +
+                logger.warn("Got strange or no result from rspamc" +
                         "\nlength of input=" + result.getInput().length() +
                         "\nstdout=" + result.getStdout() +
-                        "\nstderr=" + result.getStderr());
+                        "\nstderr=" + result.getStderr() +
+                        "\nWill do another " + numberOfRetries + " tries!");
+                if (numberOfRetries > 0) {
+                    return apply(msg, messageText, numberOfRetries - 1);
+                }
             } else {
                 if (score >= cmdArgs.getSpamScore()) {
                     processAsSpam(msg, result);
