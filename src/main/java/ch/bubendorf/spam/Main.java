@@ -46,6 +46,7 @@ public class Main {
     }
 
     public void imapRSpamd(final String[] args) throws MessagingException, IOException, InterruptedException {
+        logger.info("Parameters: " + String.join(" ", args));
         final JCommander jCommander = new JCommander(cmdArgs);
         jCommander.setAcceptUnknownOptions(true);
         jCommander.setAllowAbbreviatedOptions(true);

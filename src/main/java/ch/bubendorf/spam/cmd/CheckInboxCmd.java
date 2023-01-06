@@ -24,6 +24,8 @@ public class CheckInboxCmd extends BaseFolderCommand {
     public static final String X_IMAP_RSPAMD_SYMBOLS = "X-ImapRSpamd-Symbols";
     public static final String X_IMAP_RSPAMD_SUBJECT = "X-ImapRSpamd-Subject";
 
+    private static final int NUMBER_OF_RETRIES = 2;
+
     private IMAPFolder hamFolder;
     private IMAPFolder tomatoFolder;
     private IMAPFolder spamFolder;
@@ -46,7 +48,7 @@ public class CheckInboxCmd extends BaseFolderCommand {
 
     @Override
     protected ExecResult apply(final IMAPMessage msg, final String messageText) throws IOException, InterruptedException, MessagingException {
-        return apply(msg, messageText, 1);
+        return apply(msg, messageText, NUMBER_OF_RETRIES);
     }
 
     protected ExecResult apply(final IMAPMessage msg, final String messageText, final int numberOfRetries) throws IOException, InterruptedException, MessagingException {
@@ -58,9 +60,10 @@ public class CheckInboxCmd extends BaseFolderCommand {
                 logger.warn("Got strange or no result from rspamc" +
                         "\nlength of input=" + result.getInput().length() +
                         "\nstdout=" + result.getStdout() +
-                        "\nstderr=" + result.getStderr() +
-                        "\nWill do another " + numberOfRetries + " tries!");
+                        "\nstderr=" + result.getStderr());
                 if (numberOfRetries > 0) {
+                    logger.warn("Will do another " + (numberOfRetries == 1 ? "try" : numberOfRetries + " tries!"));
+                    sleep((NUMBER_OF_RETRIES - numberOfRetries) * 200);
                     return apply(msg, messageText, numberOfRetries - 1);
                 }
             } else {
@@ -80,6 +83,14 @@ public class CheckInboxCmd extends BaseFolderCommand {
                     ", stderr=" + result.getStderr());
         }
         return result;
+    }
+
+    private static void sleep(final int milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (final InterruptedException e) {
+            // Ignore
+        }
     }
 
     private void processAsSpam(final IMAPMessage msg, final ExecResult result) throws MessagingException {
